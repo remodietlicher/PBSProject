@@ -52,7 +52,7 @@ Scene::Scene(int argc, char* argv[])
    int arg=1;
    while(arg<argc)
    {
-      //Testcase
+   	  //Testcase
       if(!strcmp(argv[arg], "-testcase"))
       {
 		  testcase = INVALID_TESTCASE;
@@ -210,8 +210,10 @@ void Scene::Init(void)
 
 void Scene::timeStepReductionLoop(double stiffness,double mass,double damping,double L,double step, int numofIterations)
 {
+	
 	double currstep = step;
 	//damping = 0;
+	FILE* vel_error = fopen("velocity_error.dat", "a");
 	cout << "velocity change table:" << endl;	
 	cout << "step ";
 	for (int m = 1; m <= 5; m++ )
@@ -222,7 +224,9 @@ void Scene::timeStepReductionLoop(double stiffness,double mass,double damping,do
 	AdvanceTimeStep1(stiffness, mass, damping, L, startT, ANALYTIC, 0, 0, startPos, startV);
 	for (int i = 0; i < numofIterations; i++)
 	{
-		printf("%.5lf ",currstep);
+		printf("%.8lf ",currstep);
+		fprintf(vel_error, "%.8lf ", currstep); // print ts to file
+		double *values = new double[5]; // save results from all methods
 		for (int m = 1; m <= 5; m++ )
 		{
 			double p2y = startPos,v2y = startV;
@@ -230,11 +234,30 @@ void Scene::timeStepReductionLoop(double stiffness,double mass,double damping,do
 				AdvanceTimeStep1(stiffness, mass, damping, L, currstep, m, 0, 0, p2y, v2y);
 			else
 				AdvanceTimeStep1(stiffness, mass, damping, L, startT+currstep, m, 0, 0, p2y, v2y);
-			printf("%.5e ",v2y-startV);
+			printf("%.8e ",v2y-startV);
+			values[m-1] = v2y-startV;
 		}
+		
+		// print to error to file
+		for (int m = 1; m <= 5; ++m)
+			if ( m != ANALYTIC )
+				fprintf(vel_error, " %.8e", fabs(values[m-1] - values[ANALYTIC-1]));
+		fprintf(vel_error, "\n");
+		
 		cout << endl;
 		currstep/=2.0;
 	}
+	fclose(vel_error);
+
+
+	// DISPLACEMENT
+	// save error to array for (error convergence)
+	double **error = new double*[numofIterations];
+	for (int i = 0; i < numofIterations; ++i)
+		error[i] = new double[5];
+
+	FILE* disp_error = fopen("displacement_error.dat", "a");
+	FILE* error_convergence = fopen("error_convergence.dat", "a");
 	cout << "displacement table:" << endl;	
 	cout << "step "; 
 	for (int m = 1; m <= 5; m++ )
@@ -243,7 +266,10 @@ void Scene::timeStepReductionLoop(double stiffness,double mass,double damping,do
 	cout << endl;
 	for (int i = 0; i < numofIterations; i++)
 	{
-		printf("%.5lf ",currstep);
+		printf("%.8lf ",currstep);
+		fprintf(disp_error, "%.8lf ",currstep);
+		fprintf(error_convergence, "%.8lf ",currstep);
+		double *values = new double[5]; // save results from all methods
 		for (int m = 1; m <= 5; m++ )
 		{
 			double p2y = startPos,v2y = startV;
@@ -251,11 +277,41 @@ void Scene::timeStepReductionLoop(double stiffness,double mass,double damping,do
 				AdvanceTimeStep1(stiffness, mass, damping, L, currstep, m, 0, 0, p2y, v2y);
 			else
 				AdvanceTimeStep1(stiffness, mass, damping, L, startT+currstep, m, 0, 0, p2y, v2y);
-			printf("%.5e ",p2y-startPos);
+			printf("%.8e ",p2y-startPos);
+			values[m-1] = v2y-startV;
 		}
+
+		// print to error to file
+		for (int m = 1; m <= 5; ++m)
+			if ( m != ANALYTIC )
+			{
+				error[i][m-1] = fabs(values[m-1] - values[ANALYTIC-1]);
+				fprintf(disp_error, " %.8e", error[i][m-1]);
+				if ( i > 0 )
+					fprintf(error_convergence, " %.4lf", error[i-1][m-1] / error[i][m-1]);
+					
+			}
+		fprintf(disp_error, "\n");
+		fprintf(error_convergence, "\n");
+		
+
 		cout << endl;
 		currstep/=2.0;
 	}
+	printf("error convergence average: \n");
+	for (int m = 0; m <= 5; ++m)
+		if( m != ANALYTIC )
+		{
+			double err_sum = 0.0;
+			for (int i = 1; i < numofIterations; ++i)
+					err_sum += error[i-1][m-1] / error[i][m-1];
+			printf("%f ", err_sum/(numofIterations-1));
+		}
+	printf("\n");
+
+	fclose(disp_error);
+	fclose(error_convergence);
+
 }
 
 void Scene::stabilityLoop(double stiffness,double mass,double damping,double L,double step,double endTime, int numofIterations)

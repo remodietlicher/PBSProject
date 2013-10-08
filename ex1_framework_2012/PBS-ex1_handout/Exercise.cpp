@@ -177,12 +177,12 @@ public:
 
 	}
 
-	void analytic(double dt, double& p2, double& v2){
+	void analytic(double t, double& p2, double& v2){
 
 		double x, v;
 
-		x = m_c1*exp(m_alpha*m_time)*cos(m_beta*m_time) - m_alpha / m_beta*m_c1*exp(m_alpha*m_time)*sin(m_beta*m_time) - m_L - (m_m*m_g) / m_k;
-		v = -m_c1*(m_alpha*m_alpha + m_beta*m_beta) / m_beta*sin(m_beta*m_time);
+		x = m_c1*exp(m_alpha*t)*cos(m_beta*t) - m_alpha / m_beta*m_c1*exp(m_alpha*t)*sin(m_beta*t) - m_L - (m_m*m_g) / m_k;
+		v = -m_c1*(m_alpha*m_alpha + m_beta*m_beta) / m_beta*sin(m_beta*t);
 
 		p2 = x;
 		v2 = v;
@@ -225,15 +225,17 @@ public:
 
 	void trace_all_methods(double dt, double p2, double v2){
 
-		if (++cnt > 1000) {
-			return;
-		}
+		// if (++cnt > 1000) {
+		// 	return;
+		// }
 
 		void(Integrator::* analytic) (double, double&, double&) = &Integrator::analytic;
 		void(Integrator::* euler) (double, double&, double&) = &Integrator::euler;
 		void(Integrator::* sympletic_euler) (double, double&, double&) = &Integrator::sympletic_euler;
 		void(Integrator::* mid_point) (double, double&, double&) = &Integrator::mid_point;
 
+		compare_pos_file << m_time << ";";
+		compare_vel_file << m_time << ";";
 
 		trace_method(analytic, dt, p2, v2);
 		trace_method(euler, dt, p2, v2);
@@ -275,6 +277,7 @@ void AdvanceTimeStep1(double k, double m, double d, double L, double dt, int met
 	//trace all integrations
 	integrator->trace_all_methods(dt, in_p2, in_v2);
 	
+	// cout << "method: " << method << ", dt = " << dt << endl;
 
 	double x, v;
 
