@@ -112,8 +112,13 @@
 /*
  * Always include OpenGL and GLU headers
  */
-#include <GL/gl.h>
-#include <GL/glu.h>
+#ifdef _WIN64 || _WIN32
+    #include <GL/gl.h>
+    #include <GL/glu.h>
+#elif __APPLE__
+    #include <OpenGL/gl.h>
+    #include <OpenGL/glu.h>
+#endif
 
 /*
  * GLUT API macro definitions -- the special key codes:
