@@ -112,12 +112,12 @@
 /*
  * Always include OpenGL and GLU headers
  */
-#ifdef _WIN64 || _WIN32
-    #include <GL/gl.h>
-    #include <GL/glu.h>
-#elif __APPLE__
+#ifdef __APPLE__
     #include <OpenGL/gl.h>
     #include <OpenGL/glu.h>
+#else
+    #include <GL/gl.h>
+    #include <GL/glu.h>
 #endif
 
 /*
