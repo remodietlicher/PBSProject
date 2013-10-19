@@ -7,7 +7,7 @@ static const size_t GRIDSIZE = 20;
 // use a graded mesh, or a regular mesh
 static const bool gradedMesh = true;
 // laplace or poisson problem?
-static const bool laplaceProblem = true;
+static const bool laplaceProblem = false;
 // plot solution or error?
 static bool vizSolution = true;
 // display debug information?
@@ -124,9 +124,24 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 {
 	for(size_t ie=0; ie<mesh.GetNumElements(); ie++) {
 		const FEMElementTri& elem = mesh.GetElement(ie);
-		//Task4 starts here
-		
-		//Task4 ends here
+		float area = elem.getAreaInMesh(mesh, elem);
+		Vector2 q = Vector2(0, 0);
+		for(int i=0; i<3; i++){
+			q += mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(i));
+		}
+		q *= 1.0/3.0;
+		float value;
+		for(int i=0; i<3; i++){
+			Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
+			Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
+			Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
+			Matrix3x3 A(x0[0], x0[1], 1, x1[0], x1[1], 1, x2[0], x2[1], 1);
+			Vector3 b = Vector3(0, 0, 0);
+			b[i] = 1;
+			Vector3 coeffs = A.inverse()*b;
+			value = area*eval_f(q[0], q[1])*(coeffs[0]*q[0]+coeffs[1]*q[1]+coeffs[2]);
+			rhs.at(elem.GetGlobalNodeForElementNode(i)) += value;
+		}
 	}
 }
 

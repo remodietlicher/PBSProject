@@ -14,9 +14,41 @@
 // choose between geometric and usual gradient computation
 #define computeSingleBasisDerivGlobalVar computeSingleBasisDerivGlobalLES
 
+float FEMElementTri::getAreaInMesh(const FEMMesh mesh, FEMElementTri elem) {
+	Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
+	Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
+	Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
+	Vector2 x12 = x2-x1;
+	Vector2 x10 = x0-x1;
+	float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
+	
+	return area;
+}
+
+Vector3 FEMElementTri::calculateCoefficientsInMesh(const FEMMesh mesh, FEMElementTri elem, size_t nodeId) {
+	Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
+	Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
+	Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
+	Matrix3x3 A(x0[0], x0[1], 1, x1[0], x1[1], 1, x2[0], x2[1], 1);
+
+	// note: nodeId is given in the element-system, therefore 0<nodeId<2
+	// build vector b = (delta_1i, delta_2i, delta_3i)
+	assert(nodeId<3);
+	Vector3 b = Vector3(0, 0, 0);
+	b[nodeId] = 1;
+	return A.inverse()*b;
+}
+
+float FEMElementTri::eval_N(const FEMMesh mesh, FEMElementTri elem, size_t nodeId, Vector2 x) {
+	Vector3 coeffs = calculateCoefficientsInMesh(mesh, elem, nodeId);
+	return x[0]*coeffs[0] + x[1]*coeffs[1] + coeffs[2];
+}
+
 // TASK 3
 void FEMElementTri::Assemble(FEMMesh *pMesh) const
 {
+	//float area = getAreaInMesh(*pMesh); --> wieso ist das so langsam?
+	
 	Vector2 x0 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(0));
 	Vector2 x1 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(1));
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));
@@ -64,6 +96,8 @@ void FEMElementTri::computeSingleBasisDerivGlobalGeom(size_t nodeId, Vector2 &ba
 // TASK 1
 void FEMElementTri::computeSingleBasisDerivGlobalLES(size_t nodeId, Vector2 &basisDerivGlobal, const FEMMesh *pMesh) const
 {
+	//Vector3 coeffs = calculateCoefficientsInMesh(*pMesh, nodeId); --> wieso ist das so langsam?
+
 	Vector2 x0 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(0));
 	Vector2 x1 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(1));
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));

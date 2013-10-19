@@ -28,6 +28,12 @@ public:
 	//! Returns the global ID of the element node \c elsize_t
 	size_t GetGlobalNodeForElementNode(size_t elsize_t) const { return m_nodes[elsize_t]; }
 
+	//! Returns the area of this element dependant on the mesh containing it.
+	static float getAreaInMesh(const FEMMesh mesh, FEMElementTri elem);
+
+	//! Evaluate the basis function N_i (= global(nodeId)) given a particular mesh.
+	static float eval_N(const FEMMesh mesh, FEMElementTri elem, size_t nodeId, Vector2 x);
+
 //private:
 
 	/*! Computes for a basis function its x/y derivatives geometrically*/
@@ -39,6 +45,9 @@ public:
 private:
 	//! The global IDs of the three nodes of the triangle
 	size_t m_nodes[3];
+
+	//! calculate the coefficients of N_i (=global(nodeId)) given a particular mesh.
+	static Vector3 calculateCoefficientsInMesh(const FEMMesh mesh, FEMElementTri elem, size_t nodeId);
 };
 
 #endif
