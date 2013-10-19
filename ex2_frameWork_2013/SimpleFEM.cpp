@@ -7,7 +7,7 @@ static const size_t GRIDSIZE = 20;
 // use a graded mesh, or a regular mesh
 static const bool gradedMesh = true;
 // laplace or poisson problem?
-static const bool laplaceProblem = false;
+static const bool laplaceProblem = true;
 // plot solution or error?
 static bool vizSolution = true;
 // display debug information?

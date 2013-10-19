@@ -1030,6 +1030,19 @@ public:
 		m_elem[2][2] = p.m_elem[2][2];
 	}
 
+	//! constructor using individual matrix element
+	Matrix3x3T(Scalar x00, Scalar x01, Scalar x02, Scalar x10, Scalar x11, Scalar x12, Scalar x20, Scalar x21, Scalar x22){
+		m_elem[0][0] = x00;
+		m_elem[0][1] = x01;
+		m_elem[0][2] = x02;
+		m_elem[1][0] = x10;
+		m_elem[1][1] = x11;
+		m_elem[1][2] = x12;
+		m_elem[2][0] = x20;
+		m_elem[2][1] = x21;
+		m_elem[2][2] = x22;
+	}
+
 	Scalar& operator() (int _i, int _j) {
 		return m_elem[_i][_j];
 	}
