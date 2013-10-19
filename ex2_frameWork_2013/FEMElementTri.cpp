@@ -14,10 +14,10 @@
 // choose between geometric and usual gradient computation
 #define computeSingleBasisDerivGlobalVar computeSingleBasisDerivGlobalLES
 
-float FEMElementTri::getAreaInMesh(const FEMMesh mesh, FEMElementTri elem) {
-	Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
-	Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
-	Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
+float FEMElementTri::getAreaInMesh(const FEMMesh mesh) const {
+	Vector2 x0 = mesh.GetNodePosition(GetGlobalNodeForElementNode(0));
+	Vector2 x1 = mesh.GetNodePosition(GetGlobalNodeForElementNode(1));
+	Vector2 x2 = mesh.GetNodePosition(GetGlobalNodeForElementNode(2));
 	Vector2 x12 = x2-x1;
 	Vector2 x10 = x0-x1;
 	float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
@@ -25,10 +25,10 @@ float FEMElementTri::getAreaInMesh(const FEMMesh mesh, FEMElementTri elem) {
 	return area;
 }
 
-Vector3 FEMElementTri::calculateCoefficientsInMesh(const FEMMesh mesh, FEMElementTri elem, size_t nodeId) {
-	Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
-	Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
-	Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
+Vector3 FEMElementTri::calculateCoefficientsInMesh(const FEMMesh mesh, size_t nodeId) const {
+	Vector2 x0 = mesh.GetNodePosition(GetGlobalNodeForElementNode(0));
+	Vector2 x1 = mesh.GetNodePosition(GetGlobalNodeForElementNode(1));
+	Vector2 x2 = mesh.GetNodePosition(GetGlobalNodeForElementNode(2));
 	Matrix3x3 A(x0[0], x0[1], 1, x1[0], x1[1], 1, x2[0], x2[1], 1);
 
 	// note: nodeId is given in the element-system, therefore 0<nodeId<2
@@ -39,8 +39,8 @@ Vector3 FEMElementTri::calculateCoefficientsInMesh(const FEMMesh mesh, FEMElemen
 	return A.inverse()*b;
 }
 
-float FEMElementTri::eval_N(const FEMMesh mesh, FEMElementTri elem, size_t nodeId, Vector2 x) {
-	Vector3 coeffs = calculateCoefficientsInMesh(mesh, elem, nodeId);
+float FEMElementTri::eval_N(const FEMMesh mesh, size_t nodeId, Vector2 x) const {
+	Vector3 coeffs = calculateCoefficientsInMesh(mesh, nodeId);
 	return x[0]*coeffs[0] + x[1]*coeffs[1] + coeffs[2];
 }
 

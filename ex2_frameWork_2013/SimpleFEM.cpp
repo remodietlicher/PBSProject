@@ -124,7 +124,7 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 {
 	for(size_t ie=0; ie<mesh.GetNumElements(); ie++) {
 		const FEMElementTri& elem = mesh.GetElement(ie);
-		float area = elem.getAreaInMesh(mesh, elem);
+		float area = elem.getAreaInMesh(mesh);
 		Vector2 q = Vector2(0, 0);
 		for(int i=0; i<3; i++){
 			q += mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(i));

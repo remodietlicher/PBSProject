@@ -29,10 +29,10 @@ public:
 	size_t GetGlobalNodeForElementNode(size_t elsize_t) const { return m_nodes[elsize_t]; }
 
 	//! Returns the area of this element dependant on the mesh containing it.
-	static float getAreaInMesh(const FEMMesh mesh, FEMElementTri elem);
+	float getAreaInMesh(const FEMMesh mesh) const;
 
 	//! Evaluate the basis function N_i (= global(nodeId)) given a particular mesh.
-	static float eval_N(const FEMMesh mesh, FEMElementTri elem, size_t nodeId, Vector2 x);
+	float eval_N(const FEMMesh mesh, size_t nodeId, Vector2 x) const;
 
 //private:
 
@@ -47,7 +47,7 @@ private:
 	size_t m_nodes[3];
 
 	//! calculate the coefficients of N_i (=global(nodeId)) given a particular mesh.
-	static Vector3 calculateCoefficientsInMesh(const FEMMesh mesh, FEMElementTri elem, size_t nodeId);
+	Vector3 calculateCoefficientsInMesh(const FEMMesh mesh, size_t nodeId) const;
 };
 
 #endif
