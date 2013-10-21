@@ -48,13 +48,15 @@ float FEMElementTri::eval_N(const FEMMesh mesh, size_t nodeId, Vector2 x) const 
 void FEMElementTri::Assemble(FEMMesh *pMesh) const
 {
 	//float area = getAreaInMesh(*pMesh); --> wieso ist das so langsam?
-	
+
+//	/*
 	Vector2 x0 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(0));
 	Vector2 x1 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(1));
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));
 	Vector2 x12 = x2-x1;
 	Vector2 x10 = x0-x1;
 	float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
+//	*/
 
 	Vector2 basisDerivGlobal_i, basisDerivGlobal_j;
 	int global_i, global_j;
@@ -98,6 +100,7 @@ void FEMElementTri::computeSingleBasisDerivGlobalLES(size_t nodeId, Vector2 &bas
 {
 	//Vector3 coeffs = calculateCoefficientsInMesh(*pMesh, nodeId); --> wieso ist das so langsam?
 
+//	/*
 	Vector2 x0 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(0));
 	Vector2 x1 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(1));
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));
@@ -109,5 +112,7 @@ void FEMElementTri::computeSingleBasisDerivGlobalLES(size_t nodeId, Vector2 &bas
 	Vector3 b = Vector3(0, 0, 0);
 	b[nodeId] = 1;
 	Vector3 coeffs = A.inverse()*b;
+//	*/
+
 	basisDerivGlobal = Vector2(coeffs[0], coeffs[1]);
 }

@@ -9,7 +9,7 @@ static const bool gradedMesh = true;
 // laplace or poisson problem?
 static const bool laplaceProblem = false;
 // plot solution or error?
-static bool vizSolution = true;
+static bool vizSolution = false;
 // display debug information?
 static const bool debugOut = false;
 
@@ -124,7 +124,17 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 {
 	for(size_t ie=0; ie<mesh.GetNumElements(); ie++) {
 		const FEMElementTri& elem = mesh.GetElement(ie);
-		float area = elem.getAreaInMesh(mesh);
+		// float area = elem.getAreaInMesh(mesh); --> hהההה?!
+
+//		/*
+		Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
+		Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
+		Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
+		Vector2 x12 = x2-x1;
+		Vector2 x10 = x0-x1;
+		float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
+//		*/
+
 		Vector2 q = Vector2(0, 0);
 		for(int i=0; i<3; i++){
 			q += mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(i));
@@ -132,6 +142,9 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 		q *= 1.0/3.0;
 		float value;
 		for(int i=0; i<3; i++){
+			// float value_N = elem.eval_N(mesh, i, q); --> mega langsam!
+
+//			/*
 			Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
 			Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
 			Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
@@ -139,6 +152,8 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 			Vector3 b = Vector3(0, 0, 0);
 			b[i] = 1;
 			Vector3 coeffs = A.inverse()*b;
+//			*/
+
 			value = area*eval_f(q[0], q[1])*(coeffs[0]*q[0]+coeffs[1]*q[1]+coeffs[2]);
 			rhs.at(elem.GetGlobalNodeForElementNode(i)) += value;
 		}
@@ -147,9 +162,36 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 
 void SimpleFEM::computeError(FEMMesh &mesh,  const vector<float> &sol_num, vector<float> &verror, float& err_nrm )
 {
-	//Task 5 starts here
-	
-	//Task 5 ends here
+    //Task 5 starts here
+    int grid_size = (int)sqrt(mesh.GetNumNodes());
+    for (size_t idx = 0; idx < sol_num.size();idx++) {
+        Vector2 node = mesh.GetNodePosition(idx % grid_size);
+        float x = node[0];
+        float y = node[1];
+        float analytic = 3 * pow(x, 2) + 2 * x * pow(y, 3);
+        float numeric = sol_num[idx];
+        float err = abs(analytic - numeric);
+        verror[idx] = err;
+    }
+
+    // compute error norm
+    std::vector<float>  b(verror.size());
+    SparseSymmetricDynamicRowMatrix K = mesh.getMat();
+
+    // b = K * verrror
+    K.MultVector(verror,b);
+
+    // verror^ * b
+    float err_total = 0;
+    for (int idx = 0; idx < verror.size();idx++) {
+        err_total += b[idx] * verror[idx];
+    }
+
+    // square root
+    err_nrm = sqrt(abs(err_total));
+
+
+    //Task 5 ends here 
 }
 
 int main(int argc, char *argv[])
