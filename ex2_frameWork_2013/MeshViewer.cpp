@@ -25,7 +25,7 @@ MeshViewer::MeshViewer(int argc, char *argv[])
 
 void handle_keyboard(unsigned char key, int x, int y) {
 	switch (key) {
-		case 'q': 
+		case 'q':
 		case 27: // ESC
 			exit(0);
 			break;
@@ -37,7 +37,7 @@ void MeshViewer::VisualizeSolution(const FEMMesh &mesh, const vector<float> &sol
 	float maxValue = 0;
 	for(int i = 0; i<solution.size(); i++)
 		maxValue = std::max(solution[i],maxValue);
-	
+
 	glutCreateWindow("SimpleFEM");
 
 	glutReshapeWindow(600, 600);
@@ -46,7 +46,7 @@ void MeshViewer::VisualizeSolution(const FEMMesh &mesh, const vector<float> &sol
 
 	glutReshapeFunc(reshape);
 
-	glNewList(1, GL_COMPILE); 
+	glNewList(1, GL_COMPILE);
 
 	createSolutionGeometry(mesh, solution, maxValue);
 
@@ -80,7 +80,7 @@ void MeshViewer::display()
 	glScalef(2.0f, 2.0f, 1.0f);
 
 	// Render the display list:
-	glCallList(1);      
+	glCallList(1);
 
 	glPopMatrix();
 
@@ -131,7 +131,7 @@ void MeshViewer::createSolutionGeometry(const FEMMesh &mesh, const vector<float>
 
 	// loop over elements
 	for(size_t elID=0; elID<mesh.GetNumElements(); elID++)
-	{   
+	{
 		// get one
 		const FEMElementTri &element = mesh.GetElement(elID);
 
@@ -180,7 +180,7 @@ void MeshViewer::createSolutionGeometry(const FEMMesh &mesh, const vector<float>
 	glBegin(GL_LINES);
 
 	for(size_t elID=0; elID<mesh.GetNumElements(); elID++)
-	{   
+	{
 		const FEMElementTri &element = mesh.GetElement(elID);
 
 		for(size_t elsize_t=0; elsize_t<3; elsize_t++)

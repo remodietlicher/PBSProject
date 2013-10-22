@@ -12,7 +12,7 @@
 #include <math.h>
 
 // choose between geometric and usual gradient computation
-#define computeSingleBasisDerivGlobalVar computeSingleBasisDerivGlobalLES
+#define computeSingleBasisDerivGlobalVar computeSingleBasisDerivGlobalGeom
 
 float FEMElementTri::getAreaInMesh(const FEMMesh mesh) const {
 	Vector2 x0 = mesh.GetNodePosition(GetGlobalNodeForElementNode(0));
@@ -20,8 +20,8 @@ float FEMElementTri::getAreaInMesh(const FEMMesh mesh) const {
 	Vector2 x2 = mesh.GetNodePosition(GetGlobalNodeForElementNode(2));
 	Vector2 x12 = x2-x1;
 	Vector2 x10 = x0-x1;
-	float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
-	
+	float area = 0.5*fabs((x12[0]*x10[1]-x12[1]*x10[0]));
+
 	return area;
 }
 
@@ -55,7 +55,7 @@ void FEMElementTri::Assemble(FEMMesh *pMesh) const
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));
 	Vector2 x12 = x2-x1;
 	Vector2 x10 = x0-x1;
-	float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
+	float area = 0.5*fabs((x12[0]*x10[1]-x12[1]*x10[0]));
 //	*/
 
 	Vector2 basisDerivGlobal_i, basisDerivGlobal_j;
@@ -91,7 +91,7 @@ void FEMElementTri::computeSingleBasisDerivGlobalGeom(size_t nodeId, Vector2 &ba
 	// calculate normal vector to x12
 	Vector2 nx12 = Vector2(-x12[1], x12[0]);
 	assert(nx12[0]*x12[0] + nx12[1]*x12[1] == 0);
-	float height = abs((x12[0]*x10[1]-x12[1]*x10[0]))/x12.length(); // height = 2*area/base
+	float height = fabs((x12[0]*x10[1]-x12[1]*x10[0]))/x12.length(); // height = 2*area/base
 	basisDerivGlobal = nx12/nx12.length()*(1/height); // vector normal to x12 of unit (=inverse of triangles height) length
 }
 

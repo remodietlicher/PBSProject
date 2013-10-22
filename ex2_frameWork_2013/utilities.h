@@ -23,9 +23,9 @@ public:
 	Vector2T(T v) { m_xy[0] = v; m_xy[1] = v; }
 	Vector2T(const T x, const T y)  { m_xy[0] = x; m_xy[1] = y; }
 	Vector2T(const Vector2T<T> &other) { *this = other; }
-	
+
 	//----------------------------------------------------------- assignment
-	Vector2T<T> & operator=( const Vector2T<T> &other ) { 
+	Vector2T<T> & operator=( const Vector2T<T> &other ) {
 		m_xy[0]= other.m_xy[0]; m_xy[1] = other.m_xy[1]; return *this; }
 
 	//----------------------------------------------------------- element access
@@ -159,7 +159,7 @@ std::ostream& operator<<( std::ostream& os, const  Vector2T<T> &v2 )
 	char buf[256];
 	//snprintf(buf,256,"[%f,%f]", (double)v2[0],(double)v2[1]);
 	sprintf(buf,"[%f,%f]", (double)v2[0],(double)v2[1]);
-	os << std::string(buf); 
+	os << std::string(buf);
 	//os << '[' << i[0] << ", " << i[1] << ", " << i[2] << ']';
 	return os;
 }
@@ -368,7 +368,7 @@ std::ostream& operator<<( std::ostream& os, const  Matrix2x2T<T> &mat )
 	char buf[256];
 	//snprintf(buf,256,"{%f,%f,%f,%f}", (double)mat(0,0), (double)mat(1,0), (double)mat(0,1), (double)mat(1,1)   );
 	sprintf(buf,"{%f,%f,%f,%f}", (double)mat(0,0), (double)mat(1,0), (double)mat(0,1), (double)mat(1,1)   );
-	os << std::string(buf); 
+	os << std::string(buf);
 	return os;
 }
 
@@ -381,7 +381,7 @@ template<class T>
 class SparseSymmetricDynamicRowMatrixT
 {
 public:
-	/*! Constructor. The matrix will have \c numRowsCols rows and \c numRowsCols columns. 
+	/*! Constructor. The matrix will have \c numRowsCols rows and \c numRowsCols columns.
 		Only the lower-triagonal elements of the symmetric matrix will be stored. */
 	SparseSymmetricDynamicRowMatrixT(size_t numRowsCols) {
 		m_numCols = numRowsCols;
@@ -584,7 +584,7 @@ public:
 		\c residual defines the desired accuracy of the solution and \c maxIterations is the maximum number of
 		iterations to perform or -1 for an infinite amount of iterations. */
 	bool SolveLinearSystem(
-			SparseSymmetricDynamicRowMatrixT<T> &matA, vector<T> &x, const vector<T> &b, 
+			SparseSymmetricDynamicRowMatrixT<T> &matA, vector<T> &x, const vector<T> &b,
 			T residual, int maxIterations) {
 
 		size_t n = matA.GetNumRows();
@@ -971,7 +971,7 @@ public:
 	Vector3T<T> reflectionAt( const Vector3T<T> &n ) const {
 		return *this-2*(n*(*this))*n;
 	}
-	
+
     //! Returns a pointer to the raw vector data of length 3
 	const T *data() const { return m_xyz; }
 

@@ -3,13 +3,15 @@
 #include "MeshViewer.h"
 
 // size of grid
-static const size_t GRIDSIZE = 20;
+#ifndef GRIDSIZE // you can set GRIDSIZE with compiler flag -DGRIDSIZE=...
+	static const size_t GRIDSIZE = 16;
+#endif
 // use a graded mesh, or a regular mesh
-static const bool gradedMesh = true;
+static const bool gradedMesh = false;
 // laplace or poisson problem?
 static const bool laplaceProblem = false;
 // plot solution or error?
-static bool vizSolution = false;
+static bool vizSolution = true;
 // display debug information?
 static const bool debugOut = false;
 
@@ -19,7 +21,7 @@ float eval_u(float x, float y)
 	if(laplaceProblem)
 		//return x*x - y*y;
 		return exp(x)*sin(y);
-	else 
+	else
 		return 	3.f*x*x + 2.f*y*y*y*x;
 }
 
@@ -98,7 +100,7 @@ void SimpleFEM::ComputeBoundaryConditions(const FEMMesh &mesh, vector<BoundaryCo
 
 		if(isOnBoundary(pos)) {
 			float x = pos[0];
-			float y = pos[1]; 
+			float y = pos[1];
 
 			// compute reference solution on boundary
 			//float val = 3.*x*x + 2.*y*y*y*x;
@@ -124,7 +126,7 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 {
 	for(size_t ie=0; ie<mesh.GetNumElements(); ie++) {
 		const FEMElementTri& elem = mesh.GetElement(ie);
-		// float area = elem.getAreaInMesh(mesh); --> h‰‰‰‰?!
+		// float area = elem.getAreaInMesh(mesh); --> h√§√§√§√§?!
 
 //		/*
 		Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
@@ -132,7 +134,7 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 		Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
 		Vector2 x12 = x2-x1;
 		Vector2 x10 = x0-x1;
-		float area = 0.5*abs((x12[0]*x10[1]-x12[1]*x10[0]));
+		float area = 0.5*fabs((x12[0]*x10[1]-x12[1]*x10[0]));
 //		*/
 
 		Vector2 q = Vector2(0, 0);
@@ -163,35 +165,25 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 void SimpleFEM::computeError(FEMMesh &mesh,  const vector<float> &sol_num, vector<float> &verror, float& err_nrm )
 {
     //Task 5 starts here
-    int grid_size = (int)sqrt(mesh.GetNumNodes());
-    for (size_t idx = 0; idx < sol_num.size();idx++) {
-        Vector2 node = mesh.GetNodePosition(idx % grid_size);
-        float x = node[0];
-        float y = node[1];
-        float analytic = 3 * pow(x, 2) + 2 * x * pow(y, 3);
-        float numeric = sol_num[idx];
-        float err = abs(analytic - numeric);
-        verror[idx] = err;
-    }
 
-    // compute error norm
-    std::vector<float>  b(verror.size());
-    SparseSymmetricDynamicRowMatrix K = mesh.getMat();
+	int N = sol_num.size(); // length of vectors
 
-    // b = K * verrror
-    K.MultVector(verror,b);
+	// "v_err = |sol_n - sol_a|"
+	for (int i = 0; i < N; ++i)
+	{
+		Vector2 x = mesh.GetNodePosition(i);
+		verror[i] = fabs( eval_u(x[0], x[1]) - sol_num[i] );
+	}
 
-    // verror^ * b
-    float err_total = 0;
-    for (int idx = 0; idx < verror.size();idx++) {
-        err_total += b[idx] * verror[idx];
-    }
+	// "err = wurzel(v_err*K*v_err)"
+	std::vector<float> K_verror(N);
+	mesh.getMat().MultVector(verror, K_verror);
+	float err_sum = 0.0;
+	for (int i = 0; i < N; ++i)
+		err_sum += verror[i] * K_verror[i];
+	err_nrm = sqrt(err_sum);
 
-    // square root
-    err_nrm = sqrt(abs(err_total));
-
-
-    //Task 5 ends here 
+    //Task 5 ends here
 }
 
 int main(int argc, char *argv[])
@@ -226,7 +218,7 @@ int main(int argc, char *argv[])
 	assert(isSolved);
 
 	// print matrix for boundary nodes
-	if(debugOut) 
+	if(debugOut)
 		for(size_t i=0; i<mesh.GetNumNodes(); i++) {
 			const Vector2 & pi = mesh.GetNodePosition(i);
 			if(SimpleFEM::isOnBoundary(pi))
@@ -245,19 +237,19 @@ int main(int argc, char *argv[])
 	float err_nrm = 0;
 	std::vector<float> verr(nNodes);
 	SimpleFEM::computeError(mesh,solution,verr,err_nrm);
-	printf("Error norm is %f\n",err_nrm);
+	printf("Error norm is %e\n",err_nrm);
 	// Visualize the solution:
 	// draw the triangles with colors according to solution
 	// blue means zero, red means maxValue.
-	// the default problem goes from 0-5 , for other problems, 
+	// the default problem goes from 0-5 , for other problems,
 	// adjust the maxValue parameter below (values <0, or >maxValue
 	// are clamped for the display)
-	MeshViewer viewer(argc, argv);
+	// MeshViewer viewer(argc, argv);
 
-	if(vizSolution)
-		viewer.VisualizeSolution(mesh, solution);
-	else 
-		viewer.VisualizeError(mesh, verr);
+	// if(vizSolution)
+	// 	viewer.VisualizeSolution(mesh, solution);
+	// else
+	// 	viewer.VisualizeError(mesh, verr);
 
 
 	return 0;
