@@ -2183,7 +2183,7 @@
 			<key>plotlines</key>
 			<true/>
 			<key>plotsymbols</key>
-			<false/>
+			<true/>
 			<key>plotxbars</key>
 			<false/>
 			<key>plotxsticks</key>
