@@ -14,49 +14,16 @@
 // choose between geometric and usual gradient computation
 #define computeSingleBasisDerivGlobalVar computeSingleBasisDerivGlobalGeom
 
-float FEMElementTri::getAreaInMesh(const FEMMesh mesh) const {
-	Vector2 x0 = mesh.GetNodePosition(GetGlobalNodeForElementNode(0));
-	Vector2 x1 = mesh.GetNodePosition(GetGlobalNodeForElementNode(1));
-	Vector2 x2 = mesh.GetNodePosition(GetGlobalNodeForElementNode(2));
-	Vector2 x12 = x2-x1;
-	Vector2 x10 = x0-x1;
-	float area = 0.5*fabs((x12[0]*x10[1]-x12[1]*x10[0]));
-
-	return area;
-}
-
-Vector3 FEMElementTri::calculateCoefficientsInMesh(const FEMMesh mesh, size_t nodeId) const {
-	Vector2 x0 = mesh.GetNodePosition(GetGlobalNodeForElementNode(0));
-	Vector2 x1 = mesh.GetNodePosition(GetGlobalNodeForElementNode(1));
-	Vector2 x2 = mesh.GetNodePosition(GetGlobalNodeForElementNode(2));
-	Matrix3x3 A(x0[0], x0[1], 1, x1[0], x1[1], 1, x2[0], x2[1], 1);
-
-	// note: nodeId is given in the element-system, therefore 0<nodeId<2
-	// build vector b = (delta_1i, delta_2i, delta_3i)
-	assert(nodeId<3);
-	Vector3 b = Vector3(0, 0, 0);
-	b[nodeId] = 1;
-	return A.inverse()*b;
-}
-
-float FEMElementTri::eval_N(const FEMMesh mesh, size_t nodeId, Vector2 x) const {
-	Vector3 coeffs = calculateCoefficientsInMesh(mesh, nodeId);
-	return x[0]*coeffs[0] + x[1]*coeffs[1] + coeffs[2];
-}
-
 // TASK 3
 void FEMElementTri::Assemble(FEMMesh *pMesh) const
 {
-	//float area = getAreaInMesh(*pMesh); --> wieso ist das so langsam?
 
-//	/*
 	Vector2 x0 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(0));
 	Vector2 x1 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(1));
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));
 	Vector2 x12 = x2-x1;
 	Vector2 x10 = x0-x1;
 	float area = 0.5*fabs((x12[0]*x10[1]-x12[1]*x10[0]));
-//	*/
 
 	Vector2 basisDerivGlobal_i, basisDerivGlobal_j;
 	int global_i, global_j;
@@ -98,13 +65,19 @@ void FEMElementTri::computeSingleBasisDerivGlobalGeom(size_t nodeId, Vector2 &ba
 // TASK 1
 void FEMElementTri::computeSingleBasisDerivGlobalLES(size_t nodeId, Vector2 &basisDerivGlobal, const FEMMesh *pMesh) const
 {
-	//Vector3 coeffs = calculateCoefficientsInMesh(*pMesh, nodeId); --> wieso ist das so langsam?
 
-//	/*
 	Vector2 x0 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(0));
 	Vector2 x1 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(1));
 	Vector2 x2 = pMesh->GetNodePosition(GetGlobalNodeForElementNode(2));
-	Matrix3x3 A(x0[0], x0[1], 1, x1[0], x1[1], 1, x2[0], x2[1], 1);
+	Matrix3x3 A;
+	for (int i = 0; i < 2; ++i)
+	{
+		A(0,i) = x0[i];
+		A(1,i) = x1[i];
+		A(2,i) = x2[i];
+	}
+	for (int i = 0; i < 3; ++i)
+		A(i,2) = 1.0;
 
 	// note: nodeId is given in the element-system, therefore 0<nodeId<2
 	// build vector b = (delta_1i, delta_2i, delta_3i)
@@ -112,7 +85,6 @@ void FEMElementTri::computeSingleBasisDerivGlobalLES(size_t nodeId, Vector2 &bas
 	Vector3 b = Vector3(0, 0, 0);
 	b[nodeId] = 1;
 	Vector3 coeffs = A.inverse()*b;
-//	*/
 
 	basisDerivGlobal = Vector2(coeffs[0], coeffs[1]);
 }

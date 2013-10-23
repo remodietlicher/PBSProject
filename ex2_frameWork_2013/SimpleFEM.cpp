@@ -11,7 +11,7 @@ static const bool gradedMesh = false;
 // laplace or poisson problem?
 static const bool laplaceProblem = false;
 // plot solution or error?
-static bool vizSolution = true;
+static bool vizSolution = false;
 // display debug information?
 static const bool debugOut = false;
 
@@ -126,35 +126,36 @@ void SimpleFEM::ComputeRHS(const FEMMesh &mesh,  vector<float> &rhs)
 {
 	for(size_t ie=0; ie<mesh.GetNumElements(); ie++) {
 		const FEMElementTri& elem = mesh.GetElement(ie);
-		// float area = elem.getAreaInMesh(mesh); --> hääää?!
 
-//		/*
 		Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
 		Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
 		Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
 		Vector2 x12 = x2-x1;
 		Vector2 x10 = x0-x1;
 		float area = 0.5*fabs((x12[0]*x10[1]-x12[1]*x10[0]));
-//		*/
 
 		Vector2 q = Vector2(0, 0);
 		for(int i=0; i<3; i++){
 			q += mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(i));
 		}
 		q *= 1.0/3.0;
+
+		Matrix3x3 A;
+		for (int j = 0; j < 2; ++j)
+		{
+			A(0,j) = x0[j];
+			A(1,j) = x1[j];
+			A(2,j) = x2[j];
+		}
+		for (int j = 0; j < 3; ++j)
+			A(j,2) = 1.0;
+
 		float value;
 		for(int i=0; i<3; i++){
-			// float value_N = elem.eval_N(mesh, i, q); --> mega langsam!
 
-//			/*
-			Vector2 x0 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(0));
-			Vector2 x1 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(1));
-			Vector2 x2 = mesh.GetNodePosition(elem.GetGlobalNodeForElementNode(2));
-			Matrix3x3 A(x0[0], x0[1], 1, x1[0], x1[1], 1, x2[0], x2[1], 1);
 			Vector3 b = Vector3(0, 0, 0);
 			b[i] = 1;
 			Vector3 coeffs = A.inverse()*b;
-//			*/
 
 			value = area*eval_f(q[0], q[1])*(coeffs[0]*q[0]+coeffs[1]*q[1]+coeffs[2]);
 			rhs.at(elem.GetGlobalNodeForElementNode(i)) += value;
@@ -237,19 +238,19 @@ int main(int argc, char *argv[])
 	float err_nrm = 0;
 	std::vector<float> verr(nNodes);
 	SimpleFEM::computeError(mesh,solution,verr,err_nrm);
-	printf("Error norm is %e\n",err_nrm);
+	printf("Error norm is %f\n",err_nrm);
 	// Visualize the solution:
 	// draw the triangles with colors according to solution
 	// blue means zero, red means maxValue.
 	// the default problem goes from 0-5 , for other problems,
 	// adjust the maxValue parameter below (values <0, or >maxValue
 	// are clamped for the display)
-	// MeshViewer viewer(argc, argv);
+	MeshViewer viewer(argc, argv);
 
-	// if(vizSolution)
-	// 	viewer.VisualizeSolution(mesh, solution);
-	// else
-	// 	viewer.VisualizeError(mesh, verr);
+	if(vizSolution)
+		viewer.VisualizeSolution(mesh, solution);
+	else
+		viewer.VisualizeError(mesh, verr);
 
 
 	return 0;
