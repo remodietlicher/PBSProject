@@ -79,29 +79,35 @@ void ExCorrectVelocities(int _xRes, int _yRes, double _dt, const double* _pressu
 void ExAdvectWithSemiLagrange(int xRes, int yRes, double dt, double* xVelocity, double* yVelocity, double *density, double *densityTemp, double *xVelocityTemp, double *yVelocityTemp)
 {
 	// note: velocity u_{i+1/2} is practically stored at i+1
+
+	// grid spacing
 	double dx[2];
 	dx[0] = 1.0/(double)xRes;
 	dx[1] = 1.0/(double)yRes;
 
-	for (int y = 1; y < yRes-1; y++)
-	for (int x = 1; x < xRes-1; x++){
+	// Advection
+	for (int y = 0; y < yRes; y++)
+	for (int x = 0; x < xRes; x++){
 
+		// interpolate velocity at i,j
 		double adv[2];
-
 		adv[0] = 0.5 * (xVelocity[x + y*xRes] + xVelocity[x+1 + y*xRes]);
 		adv[1] = 0.5 * (yVelocity[x + y*xRes] + yVelocity[x + (y+1)*xRes]);
 
+		// get absolute position of i,j
 		double xg[] = {(double)x*dx[0], (double)y*dx[1]};
 
-		double xp[2], weight[2]; // weight[2]: interpolation weight [0 to 1, where 0 takes x0 and 1 takes xp]
-		int i0[2]; // index of bottom left gridpoint of the cell, where we interpolate
-		for (int i = 0; i < 2; ++i)
+		// compute biliniear weights
+		double xp[2], weight[2]; 					// weight[2]: interpolation weight [0 to 1, where 0 takes x0 and 1 takes xp]
+		int i0[2]; 									// index of bottom left gridpoint of the cell, where we interpolate
+		for (int i = 0; i < 2; ++i) 				// interpolate in x and y direction
 		{
-			xp[i]  = xg[i] - dt *adv[i];
-			i0[i] = (int)( floor(xp[i]/dx[i]) );
-			double x0 = dx[i] * (double)(i0[i]);
-			weight[i] = ( xp[i] - x0 ) / dx[i];
-			if(weight[i] < -0.000001 or weight[i] > 1.0000001)
+			xp[i]  = xg[i] - dt *adv[i]; 			// where does the information come from?
+			i0[i] = (int)( floor(xp[i]/dx[i]) );	// index of lower left gridpoint, of the cell of xp
+			double x0 = dx[i] * (double)(i0[i]);	// position of i0
+			weight[i] = ( xp[i] - x0 ) / dx[i];		// compute weight
+			/* DEBUG
+			if(weight[i] < -0.000001 or weight[i] > 1.0000001) // check weight!
 			{
 				printf("weight = %f\n", weight[i]);
 				printf("dx = %f\n", dx[i]);
@@ -109,21 +115,22 @@ void ExAdvectWithSemiLagrange(int xRes, int yRes, double dt, double* xVelocity, 
 				printf("x0 = %f\n", x0);
 				exit(0);
 			}
+			*/
 		}
 
+		// xVelocityTemp[x + y*xRes] = 0.0;
+		// yVelocityTemp[x + y*xRes] = 0.0;
+		// densityTemp[x + y*xRes]   = 0.0;
 
-
-		xVelocityTemp[x + y*xRes] = 0.0;
-		yVelocityTemp[x + y*xRes] = 0.0;
-		densityTemp[x + y*xRes]   = 0.0;
-
-		int x0y0 = i0[0]   + ( i0[1]  )*xRes;
-		int x1y0 = i0[0]+1 + ( i0[1]  )*xRes;
-		int x0y1 = i0[0]   + ( i0[1]+1)*xRes;
-		int x1y1 = i0[0]+1 + ( i0[1]+1)*xRes;
-		xVelocityTemp[x + y*xRes] = (1.0-weight[1])*( (1.0-weight[0])*xVelocity[x0y0] + weight[0]*xVelocity[x1y0] ) + weight[1]*( (1.0-weight[0])*xVelocity[x0y1] + weight[0]*xVelocity[x1y1] );
-		yVelocityTemp[x + y*xRes] = (1.0-weight[1])*( (1.0-weight[0])*yVelocity[x0y0] + weight[0]*yVelocity[x1y0] ) + weight[1]*( (1.0-weight[0])*yVelocity[x0y1] + weight[0]*yVelocity[x1y1] );
-		densityTemp[x + y*xRes]   = (1.0-weight[1])*( (1.0-weight[0])*density[x0y0]   + weight[0]*density[x1y0] )   + weight[1]*( (1.0-weight[0])*density[x0y1]   + weight[0]*density[x1y1] );
+		// update with interpolation weights
+		int x0y0 = i0[0]   + ( i0[1]  )*xRes; // lower left
+		int x1y0 = i0[0]+1 + ( i0[1]  )*xRes; // lower right
+		int x0y1 = i0[0]   + ( i0[1]+1)*xRes; // upper left
+		int x1y1 = i0[0]+1 + ( i0[1]+1)*xRes; // upper right
+		double OneMinusWeight[] = {1.0-weight[0], 1.0-weight[1]};
+		xVelocityTemp[x + y*xRes] = (OneMinusWeight[1])*( (OneMinusWeight[0])*xVelocity[x0y0] + weight[0]*xVelocity[x1y0] ) + weight[1]*( (OneMinusWeight[0])*xVelocity[x0y1] + weight[0]*xVelocity[x1y1] );
+		yVelocityTemp[x + y*xRes] = (OneMinusWeight[1])*( (OneMinusWeight[0])*yVelocity[x0y0] + weight[0]*yVelocity[x1y0] ) + weight[1]*( (OneMinusWeight[0])*yVelocity[x0y1] + weight[0]*yVelocity[x1y1] );
+		densityTemp[x + y*xRes]   = (OneMinusWeight[1])*( (OneMinusWeight[0])*density[x0y0]   + weight[0]*density[x1y0] )   + weight[1]*( (OneMinusWeight[0])*density[x0y1]   + weight[0]*density[x1y1] );
 	}
 	for (int y = 0; y < yRes; y++)
 	for (int x = 0; x < xRes; x++){
