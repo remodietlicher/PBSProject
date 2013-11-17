@@ -1,8 +1,10 @@
 #include "sws.h"
 
-#define INDEX(i, j) i + j*yRes
+#define INDEX(i, j) i + j*xRes
 
-SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt){
+SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) :
+	v_ext({0, 0})
+{
 	eta.resize(xRes*yRes);
 	vel_x.resize(xRes*yRes);
 	vel_y.resize(xRes*yRes);
@@ -15,9 +17,18 @@ SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt){
 	this->dx[1] = ySize/yRes;
 }
 
-void SWSolver::advect(int QUANTITY){
+float SWSolver::interpolate(std::vector<float> &quantity, float weight[2], int i0[2]) const {
+	double OneMinusWeight[] = {1.0-weight[0], 1.0-weight[1]};
+	return (OneMinusWeight[1])*( (OneMinusWeight[0])*quantity[INDEX(i0[0], i0[1])] + weight[0]*quantity[INDEX(i0[0]+1, i0[2])] ) + weight[1]*( (OneMinusWeight[0])*quantity[INDEX(i0[0], i0[1]+1)] + weight[0]*quantity[INDEX(i0[0]+1, i0[1]+1)]);
+}
+
+void SWSolver::advect(std::vector<float> array, int QUANTITY){
 	float v[2], s, xg[2], xp[2];
 	int index;
+
+	std::vector<float> temp;
+	temp.resize(xRes*yRes);
+
 	for(int i=1; i<xRes-1; i++)
 		for(int j=1; j<yRes-1; j++){
 			switch(QUANTITY){
@@ -50,14 +61,21 @@ void SWSolver::advect(int QUANTITY){
 				weight[i] = ( xp[i] - x0 ) / dx[i];		// compute weight
 			}
 
-			// update with interpolation weights
-			int x0y0 = i0[0]   + ( i0[1]  )*xRes; // lower left
-			int x1y0 = i0[0]+1 + ( i0[1]  )*xRes; // lower right
-			int x0y1 = i0[0]   + ( i0[1]+1)*xRes; // upper left
-			int x1y1 = i0[0]+1 + ( i0[1]+1)*xRes; // upper right
-			double OneMinusWeight[] = {1.0-weight[0], 1.0-weight[1]};
-			xVelocityTemp[x + y*xRes] = (OneMinusWeight[1])*( (OneMinusWeight[0])*xVelocity[x0y0] + weight[0]*xVelocity[x1y0] ) + weight[1]*( (OneMinusWeight[0])*xVelocity[x0y1] + weight[0]*xVelocity[x1y1] );
-			yVelocityTemp[x + y*xRes] = (OneMinusWeight[1])*( (OneMinusWeight[0])*yVelocity[x0y0] + weight[0]*yVelocity[x1y0] ) + weight[1]*( (OneMinusWeight[0])*yVelocity[x0y1] + weight[0]*yVelocity[x1y1] );
-			densityTemp[x + y*xRes]   = (OneMinusWeight[1])*( (OneMinusWeight[0])*density[x0y0]   + weight[0]*density[x1y0] )   + weight[1]*( (OneMinusWeight[0])*density[x0y1]   + weight[0]*density[x1y1] );
+			temp[INDEX(i, j)] = interpolate(array, weight, i0);			
 		}
+		for (int y = 0; y < yRes; y++)
+			for (int x = 0; x < xRes; x++){
+				array[x + y*xRes] = temp[x + y*xRes];
+	}
+}
+
+void SWSolver::updateHeight(){
+	for(int i=1; i<xRes-1; i++)
+		for(int j=1; j<yRes-1; j++){
+			eta[INDEX(i, j)] -= eta[INDEX(i, j)] * dt * ((vel_x[INDEX(i+1, j)]-vel_x[INDEX(i, j)])/dx[0] + (vel_y[INDEX(i, j+1)]-vel_y[INDEX(i, j)])/dx[1]);
+		}
+}
+
+void SWSolver::updateVelocity(){
+	
 }
