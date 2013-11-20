@@ -5,7 +5,7 @@
 #define VELOCITY_Y 1
 #define ETA 2
 
-#define INDEX(i, j) (i)+(j)*xRes
+#define INDEX(i, j) (i)*res[0]+(j)
 #include <vector>
 
 class SWSolver{
@@ -15,7 +15,7 @@ private:
 	float g;									// gravitational constant
 	std::vector<float> terrain;					// underlying terrain
 	std::vector<float> eta, height, vel_x, vel_y;
-	int xRes, yRes;
+	int res[2];
 	float xSize, ySize, dt, dx[2];
 public:
 	SWSolver(int xRes, int yRes, float xSize, float ySize, float dt);
@@ -28,8 +28,9 @@ public:
 	void setVelocities(std::vector<float> vel_x, std::vector<float> vel_y);
 	void setExternalVelocities(float v_ext_x, float v_ext_y);
 	void setExternalAccelerations(float a_ext_x, float a_ext_y);
+	void setBoundary();
 private:
-	float interpolate(std::vector<float> &quantity, float weight[2], int i0[2]) const;
+	float interpolate(std::vector<float> &array, float x, float y);
 	void calculateHeight();
 };
 
