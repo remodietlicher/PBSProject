@@ -7,7 +7,7 @@ SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) {
 	a_ext[1] = 0;
 	v_ext[0] = 0;
 	v_ext[1] = 0;
-	g = -9.81f;
+	g = 9.81f;
 	terrain.resize(xRes*yRes);	// initializes all values to zero
 	eta.resize(xRes*yRes);
 	eta.assign(xRes*yRes, 1);	// put some default values
@@ -41,7 +41,7 @@ float SWSolver::interpolate(std::vector<float> &array, float x, float y) {
 void SWSolver::advect(int QUANTITY){
 	float v[2];
 
-	std::vector<float> temp, array;
+	std::vector<float> temp, *array;
 	temp.resize(res[0]*res[1]);
 
 	for(int i=1; i<res[0]-1; i++)
@@ -51,17 +51,17 @@ void SWSolver::advect(int QUANTITY){
 			v[1] = v_ext[1];
 			switch(QUANTITY){
 			case 0: // eta (note that this is at the center of a cell)
-				array = eta;
+				array = &eta;
 				v[0] += (vel_x[INDEX(i, j)] + vel_x[INDEX(i+1, j)])*0.5f;
 				v[1] += (vel_y[INDEX(i, j)] + vel_y[INDEX(i, j+1)])*0.5f;
 				break;
 			case 1: // vel_x (on the left)
-				array = vel_x;
+				array = &vel_x;
 				v[0] += vel_x[INDEX(i, j)];
 				v[1] += (vel_y[INDEX(i, j)] + vel_y[INDEX(i-1, j)] + vel_y[INDEX(i-1, j+1)] + vel_y[INDEX(i, j+1)])*0.25f;
 				break;
 			case 2: // vel_y (on the bottom)
-				array = vel_y;
+				array = &vel_y;
 				v[0] += (vel_x[INDEX(i, j)] + vel_x[INDEX(i-1, j)] + vel_x[INDEX(i-1, j+1)] + vel_x[INDEX(i, j+1)])*0.25f;
 				v[1] += vel_x[INDEX(i, j)];
 				break;
@@ -80,28 +80,11 @@ void SWSolver::advect(int QUANTITY){
 			if(srcpj>res[1]-1.) srcpj = res[1]-2.f;
 
 			// interpolate source value
-			temp[INDEX(i, j)] = interpolate(array, srcpi, srcpj);
-/*			// get absolute position of i,j
-			float xg[] = {(float)i*dx[0], (float)j*dx[1]};
-
-			// compute biliniear weights
-			float xp[2], weight[2], x0[2];				// weight[2]: interpolation weight [0 to 1, where 0 takes x0 and 1 takes xp]
-			int i0[2]; 									// index of bottom left gridpoint of the cell, where we interpolate
-			for (int l = 0; l < 2; l++) 				// interpolate in x and y direction
-			{
-				xp[l] = xg[l] - dt*v[l]; 				// where does the information come from?
-				i0[l] = (int)floor(xp[l]/dx[l]);		// index of lower left gridpoint, of the cell of xp
-				if(i0[l]<0.0f) i0[l] = 0.0f;			// clamp at border
-				if(i0[l]>res[l]-1) i0[l] = (float)(res[l]-1);
-				x0[l] = dx[l]*(float)(i0[l]);			// position of i0
-				weight[l] = ( xp[l] - x0[l] ) / dx[l];	// compute weight
-			}
-
-			temp[INDEX(i, j)] = interpolate(array, weight, i0);	*/
+			temp[INDEX(i, j)] = interpolate(*array, srcpi, srcpj);
 		}
 		for (int i = 0; i < res[0]; i++)
 			for (int j = 0; j < res[1]; j++){
-				array[INDEX(i, j)] = temp[INDEX(i, j)];
+				(*array)[INDEX(i, j)] = temp[INDEX(i, j)];
 	}
 }
 
@@ -109,6 +92,7 @@ void SWSolver::updateHeight(){
 	for(int i=1; i<res[0]-1; i++)
 		for(int j=1; j<res[1]-1; j++){
 			eta[INDEX(i, j)] += -eta[INDEX(i, j)] * dt * ((vel_x[INDEX(i+1, j)]-vel_x[INDEX(i, j)])/dx[0] + (vel_y[INDEX(i, j+1)]-vel_y[INDEX(i, j)])/dx[1]);
+			if(eta[INDEX(i, j)] < terrain[INDEX(i, j)]) eta[INDEX(i, j)] = terrain[INDEX(i, j)];
 			height[INDEX(i, j)] = eta[INDEX(i, j)] + terrain[INDEX(i, j)];
 		}
 }
@@ -126,12 +110,14 @@ void SWSolver::updateVelocity(){
 
 void SWSolver::setBoundary(){
 	for(int i=0; i<res[0]; i++){
-		eta[INDEX(i, 0)] = eta[INDEX(i, 1)];				// lower boundary
-		eta[INDEX(i, res[0]-1)] = eta[INDEX(i, res[0]-2)];	// upper boundary
+		height[INDEX(i, 0)] = height[INDEX(i, 1)];				// lower boundary
+//		height[INDEX(i, 0)] = 7.0;				// lower boundary
+		height[INDEX(i, res[0]-1)] = height[INDEX(i, res[0]-2)];	// upper boundary
 	}
 	for(int j=0; j<res[1]; j++){
-		eta[INDEX(0, j)] = eta[INDEX(1, j)];				// left boundary
-		eta[INDEX(res[1]-1, j)] = eta[INDEX(res[1]-2, j)];	// right boundary
+		height[INDEX(0, j)] = height[INDEX(1, j)];				// left boundary
+//		height[INDEX(0, j)] = 3.0;				// left boundary
+		height[INDEX(res[1]-1, j)] = height[INDEX(res[1]-2, j)];	// right boundary
 	}
 }
 
