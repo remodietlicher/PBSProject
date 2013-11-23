@@ -1,5 +1,6 @@
 #include "util.h"
 #include "sws.h"
+#include "viewer.h"
 
 #include <fstream>
 #include <iostream>
@@ -9,9 +10,10 @@ const int N_STEPS = 1;
 
 using namespace std;
 
-int main(){
-	int res[2] = {20, 20};
-	SWSolver sws(res[0], res[1], 1, 1, 0.01f);
+int main(int argc, char** argv){
+	int res[2] = {100, 100};
+	SWSolver sws(res[0], res[1], 1, 1, 0.001f);
+	SWViewer swv(&sws);
 	std::vector<std::vector<float>> heightmaps;
 	std::vector<float> initEta;
 	initEta.resize(res[0]*res[1]);
@@ -23,26 +25,16 @@ int main(){
 
 	sws.setEta(initEta);
 
-	ofstream data_heightmap;
+	sws.advanceTimestep();
+	swv.drawScene();
+
+
+/*	ofstream data_heightmap;
 	data_heightmap.open("testdata//heightmap.txt");
 	int l=0;
 	int a = 1;
 	while(a == 1){
-		cout << "advecting eta..." << endl;
-		sws.advect(ETA);
-		cout << "advecting velocity_x..." << endl;
-		sws.advect(VELOCITY_X);
-		cout << "advecting velocity_y..." << endl;
-		sws.advect(VELOCITY_Y);
-
-		cout << "updating heights..." << endl;
-		sws.updateHeight();
-
-		cout << "updating velocities..." << endl;
-		sws.updateVelocity();
-
-		cout << "setting boundaries..." << endl;
-		sws.setBoundary();
+		sws.advanceTimestep();
 
 		cout << "writing heightmap to file..." << endl;
 		heightmaps.push_back(sws.getHeightMap());
@@ -55,4 +47,5 @@ int main(){
 		cout << "continue? (1/0) ";
 		cin >> a;
 	}
+	*/
 }

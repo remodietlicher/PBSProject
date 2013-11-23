@@ -1,4 +1,5 @@
 #include "sws.h"
+#include "util.h"
 #include <iostream>
 
 SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) {
@@ -8,7 +9,7 @@ SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) {
 	v_ext[0] = 0;
 	v_ext[1] = 0;
 	g = 9.81f;
-	terrain.resize(xRes*yRes);	// initializes all values to zero
+	ground.resize(xRes*yRes);	// initializes all values to zero
 	eta.resize(xRes*yRes);
 	eta.assign(xRes*yRes, 1);	// put some default values
 	height.resize(xRes*yRes);
@@ -92,8 +93,8 @@ void SWSolver::updateHeight(){
 	for(int i=1; i<res[0]-1; i++)
 		for(int j=1; j<res[1]-1; j++){
 			eta[INDEX(i, j)] += -eta[INDEX(i, j)] * dt * ((vel_x[INDEX(i+1, j)]-vel_x[INDEX(i, j)])/dx[0] + (vel_y[INDEX(i, j+1)]-vel_y[INDEX(i, j)])/dx[1]);
-			if(eta[INDEX(i, j)] < terrain[INDEX(i, j)]) eta[INDEX(i, j)] = terrain[INDEX(i, j)];
-			height[INDEX(i, j)] = eta[INDEX(i, j)] + terrain[INDEX(i, j)];
+			if(eta[INDEX(i, j)] < ground[INDEX(i, j)]) eta[INDEX(i, j)] = ground[INDEX(i, j)];
+			height[INDEX(i, j)] = eta[INDEX(i, j)] + ground[INDEX(i, j)];
 		}
 }
 
@@ -121,6 +122,24 @@ void SWSolver::setBoundary(){
 	}
 }
 
+void SWSolver::advanceTimestep(){
+		std::cout << "advecting eta..." << std::endl;
+		advect(ETA);
+		std::cout << "advecting velocity_x..." << std::endl;
+		advect(VELOCITY_X);
+		std::cout << "advecting velocity_y..." << std::endl;
+		advect(VELOCITY_Y);
+
+		std::cout << "updating heights..." << std::endl;
+		updateHeight();
+
+		std::cout << "updating velocities..." << std::endl;
+		updateVelocity();
+
+		std::cout << "setting boundaries..." << std::endl;
+		setBoundary();
+}
+
 std::vector<float> SWSolver::getHeightMap(){
 	return height;
 }
@@ -129,8 +148,8 @@ void SWSolver::setEta(std::vector<float> eta){
 	this->eta = eta;
 	calculateHeight();
 }
-void SWSolver::setTerrain(std::vector<float> terrain){
-	this->terrain = terrain;
+void SWSolver::setGround(std::vector<float> ground){
+	this->ground = ground;
 	calculateHeight();
 }
 void SWSolver::setVelocities(std::vector<float> vel_x, std::vector<float> vel_y){
@@ -148,6 +167,19 @@ void SWSolver::setExternalAccelerations(float a_ext_x, float a_ext_y){
 void SWSolver::calculateHeight(){
 	for(int i=0; i<res[0]; i++)
 		for(int j=0; j<res[1]; j++){
-			height[INDEX(i, j)] = eta[INDEX(i, j)] + terrain[INDEX(i, j)];
+			height[INDEX(i, j)] = eta[INDEX(i, j)] + ground[INDEX(i, j)];
 		}
+}
+
+float SWSolver::getXSize(){
+	return xSize;
+}
+float SWSolver::getYSize(){
+	return ySize;
+}
+int SWSolver::getXRes(){
+	return res[0];
+}
+int SWSolver::getYRes(){
+	return res[1];
 }
