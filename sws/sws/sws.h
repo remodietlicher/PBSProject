@@ -21,7 +21,7 @@ private:
 
 public:
 	SWSolver(int xRes, int yRes, float xSize, float ySize, float dt);
-	std::vector<float> getHeightMap();
+	const std::vector<float> getHeightMap();
 	float getXSize();
 	float getYSize();
 	int getXRes();

@@ -1,5 +1,5 @@
 #include "sws.h"
-#include "util.h"
+#include "vec3f.h"
 #include <iostream>
 
 SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) {
@@ -140,7 +140,7 @@ void SWSolver::advanceTimestep(){
 		setBoundary();
 }
 
-std::vector<float> SWSolver::getHeightMap(){
+const std::vector<float> SWSolver::getHeightMap(){
 	return height;
 }
 
