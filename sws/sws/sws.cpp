@@ -2,6 +2,7 @@
 #include "vec3f.h"
 #include <iostream>
 
+
 SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) {
 	// initialize defaults
 	a_ext[0] = 0;
@@ -90,12 +91,24 @@ void SWSolver::advect(int QUANTITY){
 }
 
 void SWSolver::updateHeight(){
-	for(int i=1; i<res[0]-1; i++)
-		for(int j=1; j<res[1]-1; j++){
-			eta[INDEX(i, j)] += -eta[INDEX(i, j)] * dt * ((vel_x[INDEX(i+1, j)]-vel_x[INDEX(i, j)])/dx[0] + (vel_y[INDEX(i, j+1)]-vel_y[INDEX(i, j)])/dx[1]);
-			if(eta[INDEX(i, j)] < ground[INDEX(i, j)]) eta[INDEX(i, j)] = ground[INDEX(i, j)];
+	//std::cout << "update height:" << std::endl;
+	for (int i = 1; i < res[0] - 1; i++) {
+		//std::cout << std::endl << i << ": ";
+		for (int j = 1; j < res[1] - 1; j++){
+
+			float oldEta = eta[INDEX(i, j)];
+
+			eta[INDEX(i, j)] += -eta[INDEX(i, j)] * dt * ((vel_x[INDEX(i + 1, j)] - vel_x[INDEX(i, j)]) / dx[0] + (vel_y[INDEX(i, j + 1)] - vel_y[INDEX(i, j)]) / dx[1]);
+			if (eta[INDEX(i, j)] < ground[INDEX(i, j)]) eta[INDEX(i, j)] = ground[INDEX(i, j)];
 			height[INDEX(i, j)] = eta[INDEX(i, j)] + ground[INDEX(i, j)];
+
+			float newEta = eta[INDEX(i, j)];
+
+			//std::cout << newEta - oldEta<<" ";
 		}
+		
+	}
+	//std::cout <<std::endl;
 }
 
 void SWSolver::updateVelocity(){

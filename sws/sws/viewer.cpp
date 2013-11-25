@@ -57,6 +57,15 @@ int SWViewer::length()
 	return sws->getYRes(); 
 }
 
+float  SWViewer::getXSize()
+{
+	return sws->getXSize();
+}
+float  SWViewer::getYSize()
+{
+	return sws->getYSize();
+}
+
 Vec3f SWViewer::getNormal(int i, int j)
 {
 	return normals[V_INDEX(i, j)];

@@ -23,6 +23,8 @@ public:
 	SWViewer(SWSolver *sws);
 	int width();
 	int length();
+	float getXSize();
+	float getYSize();
 
 	void computeNormals();
 	Vec3f getNormal(int i, int j);
