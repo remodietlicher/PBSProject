@@ -32,6 +32,7 @@ public:
 	void setExternalVelocities(float v_ext_x, float v_ext_y);
 	void setExternalAccelerations(float a_ext_x, float a_ext_y);
 	void advanceTimestep();
+	void copyHeights(float*);
 
 private:
 	float interpolate(std::vector<float> &array, float x, float y);

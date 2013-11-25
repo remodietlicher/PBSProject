@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <algorithm>
 
+
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
 #include <GLUT/glut.h>
@@ -18,6 +19,14 @@
 
 using namespace std;
 
+//#define USE_OPENMP
+
+#ifdef USE_OPENMP
+#include <omp.h>
+// thread sync flag
+int data_flag = 0;
+#endif
+
 // size of the image to render
 unsigned int g_width;
 unsigned int g_height;
@@ -30,13 +39,17 @@ SWViewer *viewer = nullptr;
 Exporter * exporter = nullptr;
 
 
+//foward declarations
+//void run_solver();
+
+
 void loadScene() {
-	g_width  = 600;
-	g_height = 400;
+	g_width  = 1000;
+	g_height = 1000;
 
 	int res[2] = { 100, 100 };
 	
-	solver = new SWSolver(res[0], res[1], 1, 1, 0.0005f);
+	solver = new SWSolver(res[0], res[1], 1, 1, 0.0006f);
 	viewer = new SWViewer(solver);
 	exporter = new Exporter();
 
@@ -47,7 +60,7 @@ void loadScene() {
 	float initialEta = 10.0f;
 	for (int i = 0; i < res[0]; i++)
 	for (int j = 0; j < res[1]; j++){
-		if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 1.5;
+		if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
 		else initEta[INDEX(i, j)] = initialEta;
 	}
 
@@ -111,13 +124,50 @@ void handleResize(int w, int h) {
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
 }
 
-void drawScene() {
+#ifdef USE_OPENMP
+void run_solver()
+{
+	int tid = omp_get_thread_num();
 
+	while (true) {
+		// wait until  data have been consumed/displayed (spinning, no mutex in openMP)
+#pragma omp flush (data_flag)
+		while (data_flag == 1){
+#pragma omp flush (data_flag)
+		}
+		
+		// compute next time step
+		solver->advanceTimestep();
+
+		// update viewer  (copy buffer, compute normals) 
+		viewer->update();
+
+		// notify renderer 
+#pragma omp flush (data_flag)
+		data_flag = 1;
+#pragma omp flush (data_flag)
+
+		//cout << "timestep computed (Thread " <<tid<<")"<< endl;
+	}
+}
+#endif
+
+void drawScene() {
+	static int frmCnt = 0;
+
+
+#ifdef USE_OPENMP
+	// wait for data (spinning, no mutex in openMP)
+#pragma omp flush (data_flag)
+	while (data_flag == 0){
+#pragma omp flush (data_flag)
+	}
+#else
 	// compute next time step
 	solver->advanceTimestep();
-
-	// update normales 
-	viewer->computeNormals();
+	// update viewer  (copy buffer, compute normals) 
+	viewer->update();
+#endif
 
 	int width  = viewer->width();
 	int length = viewer->length();
@@ -172,13 +222,46 @@ void drawScene() {
 	//use with debuger or or file system is getting flooded ..
 	//exportImage();
 
+#ifdef USE_OPENMP
+	// notify solver that we are done
+#pragma omp flush (data_flag)
+	data_flag = 0;
+#pragma omp flush (data_flag)
+
+	int tid = omp_get_thread_num();
+	//cout << "data consumed (Thread " << tid << ")" << endl;
+#endif
+
+
+	frmCnt++;
+	if (frmCnt % 100 == 0) {
+		cout << "number of rendered frames: " << frmCnt << endl;
+	}
 }
 
 void update(int value) {
 	
 	glutPostRedisplay();
-	glutTimerFunc(25, update, 0);
+	glutTimerFunc(1, update, 0);
 }
+
+#ifdef USE_OPENMP
+void start() 
+{
+#pragma omp parallel sections num_threads(2)
+	{
+#pragma omp section 
+		{
+			glutMainLoop();
+		}
+
+#pragma omp section 
+		{
+			run_solver();
+		}
+	}
+}
+#endif
 
 int main(int argc, char** argv) {
 
@@ -195,9 +278,14 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(handleKeypress);
 	glutReshapeFunc(handleResize);
-	glutTimerFunc(25, update, 0);
+	glutTimerFunc(100, update, 0);
 
+#ifdef USE_OPENMP
+	start();
+#else
 	glutMainLoop();
+#endif
+
 	return 0;
 }
 

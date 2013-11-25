@@ -18,6 +18,7 @@
 class SWViewer {
 private:
 	Vec3f* normals;
+	float* heights;
 	SWSolver* sws;
 public:
 	SWViewer(SWSolver *sws);
@@ -26,11 +27,12 @@ public:
 	float getXSize();
 	float getYSize();
 
-	void computeNormals();
+	void update();
 	Vec3f getNormal(int i, int j);
 	float getHeight(int i, int j);
 
 private:
+	void computeNormals();
 	void cleanup();
 };
 

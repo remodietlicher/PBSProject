@@ -4,14 +4,22 @@
 SWViewer::SWViewer(SWSolver *sws){
 	this->sws = sws;
 	this->normals = new Vec3f[sws->getXRes()*sws->getYRes()];
+	this->heights = new float[sws->getXRes()*sws->getYRes()];
 }
 
 void SWViewer::cleanup(){
 	delete normals;
+	delete heights;
+}
+
+void SWViewer::update()
+{
+	sws->copyHeights(heights);
+	computeNormals();
 }
 
 void SWViewer::computeNormals(){
-	const std::vector<float>& h = sws->getHeightMap();
+	float* h = heights;
 
 	for(int i=0; i<sws->getXRes(); i++)
 		for(int j=0; j<sws->getYRes(); j++){

@@ -136,21 +136,33 @@ void SWSolver::setBoundary(){
 }
 
 void SWSolver::advanceTimestep(){
-		std::cout << "advecting eta..." << std::endl;
+		//std::cout << "advecting eta..." << std::endl;
 		advect(ETA);
-		std::cout << "advecting velocity_x..." << std::endl;
+		//std::cout << "advecting velocity_x..." << std::endl;
 		advect(VELOCITY_X);
-		std::cout << "advecting velocity_y..." << std::endl;
+		//std::cout << "advecting velocity_y..." << std::endl;
 		advect(VELOCITY_Y);
 
-		std::cout << "updating heights..." << std::endl;
+		//std::cout << "updating heights..." << std::endl;
 		updateHeight();
 
-		std::cout << "updating velocities..." << std::endl;
+		//std::cout << "updating velocities..." << std::endl;
 		updateVelocity();
 
-		std::cout << "setting boundaries..." << std::endl;
+		//std::cout << "setting boundaries..." << std::endl;
 		setBoundary();
+}
+
+void SWSolver::copyHeights(float* buffer)
+{
+	for (int i = 1; i < res[0] - 1; i++) {
+		//std::cout << std::endl << i << ": ";
+		for (int j = 1; j < res[1] - 1; j++){
+
+			float h = height[INDEX(i, j)];
+			buffer[INDEX(i, j)] = h;
+		}
+	}
 }
 
 const std::vector<float> SWSolver::getHeightMap(){
