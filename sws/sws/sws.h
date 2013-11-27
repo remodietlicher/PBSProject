@@ -8,9 +8,10 @@
 #define INDEX(i, j) (i)*res[0]+(j)
 
 #include <vector>
+#include "rigidbody.h"
 
 class SWSolver{
-private:
+protected:
 	float a_ext[2];								// external acceleration
 	float v_ext[2];								// external velocity
 	float g;									// gravitational constant
@@ -34,7 +35,7 @@ public:
 	void advanceTimestep();
 	void copyHeights(float*);
 
-private:
+protected:
 	float interpolate(std::vector<float> &array, float x, float y);
 	void calculateHeight();
 	void setBoundary();
@@ -42,5 +43,18 @@ private:
 	void updateHeight();
 	void updateVelocity();
 };
+
+class SWRBSolver : SWSolver {
+private:
+	Box box;
+	std::vector<float> displ_old, displ_new;
+public:
+	SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box b);
+	void advanceTimestep();
+private:
+	void handleBodyInteraction();
+	std::vector<float> getProjectedIndices();
+};
+
 
 #endif

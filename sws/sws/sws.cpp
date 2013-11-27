@@ -208,3 +208,33 @@ int SWSolver::getXRes(){
 int SWSolver::getYRes(){
 	return res[1];
 }
+
+SWRBSolver::SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box b) : 
+	SWSolver(xRes, yRes, xSize, ySize, dt),
+	box(b)
+{
+	displ_old.resize(xRes*yRes);
+	displ_new.resize(xRes*yRes);
+}
+
+void SWRBSolver::advanceTimestep(){
+	std::vector<float> projIndices = getProjectedIndices();
+	for(int i=0; i<projIndices.size(); i++){
+		
+	}
+	SWSolver::advanceTimestep();
+
+	cout << "handling body interaction..." << endl;
+
+	handleBodyInteraction();
+}
+
+std::vector<float> SWRBSolver::getProjectedIndices(){
+	std::vector<float> indices;
+	indices.resize(1);
+	return indices;
+}
+
+void SWRBSolver::handleBodyInteraction(){
+	
+}
