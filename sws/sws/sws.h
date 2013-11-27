@@ -51,9 +51,12 @@ private:
 public:
 	SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box b);
 	void advanceTimestep();
+	void testSorting(); // only for debug purposes
 private:
 	void handleBodyInteraction();
 	std::vector<float> getProjectedIndices();
+	std::vector<Vector3f> getConvexHull8XY(Vector3f *vertices);
+	void bubbleSortVert(int coord, Vector3f A[8]);
 };
 
 

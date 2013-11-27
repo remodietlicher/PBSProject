@@ -267,6 +267,7 @@ int main(int argc, char** argv) {
 
 	loadScene();
 
+/*
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(g_width, g_height);
@@ -285,6 +286,11 @@ int main(int argc, char** argv) {
 #else
 	glutMainLoop();
 #endif
+*/
+	SWRBSolver swrb(0, 0, 0.0f, 0.0f, 0.0f, Box(Vector3f(0, 0, 0), 0.0f, Vector3f(0, 0, 0), Vector3f(0, 0, 0), Vector3f(0, 0, 0)));
+
+	swrb.testSorting();
+
 
 	return 0;
 }

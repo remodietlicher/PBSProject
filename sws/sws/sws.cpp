@@ -1,6 +1,8 @@
 #include "sws.h"
 #include "vec3f.h"
 #include <iostream>
+#include <algorithm>
+#include <fstream>
 
 
 SWSolver::SWSolver(int xRes, int yRes, float xSize, float ySize, float dt) {
@@ -231,10 +233,98 @@ void SWRBSolver::advanceTimestep(){
 
 std::vector<float> SWRBSolver::getProjectedIndices(){
 	std::vector<float> indices;
-	indices.resize(1);
+	indices.resize(0);
+	std::vector<Vector3f> convHull;
+
+	// calculate vertices of the box (+++, ++-, +-+, ...)
+	Vector3f vertices[8];
+	for(int i=0; i<2; i++)
+		for(int j=0; j<2; j++)
+			for(int l=0; l<2; l++)
+				vertices[i+j+l] = box.x0*pow(-1, i)+box.y0*pow(-1, j)+box.z0*pow(-1, l);
+
+	convHull = getConvexHull8XY(vertices);
+	
+
 	return indices;
 }
 
 void SWRBSolver::handleBodyInteraction(){
 	
+}
+
+void SWRBSolver::bubbleSortVert(int coord, Vector3f *A){
+	bool swapped;
+	int n = 8;
+	do{
+		swapped = false;
+		for(int i=0; i<n-1; i++){
+			if(A[i][coord] > A[i+1][coord]){
+				Vector3f tmp = A[i];
+				A[i] = A[i+1];
+				A[i+1] = tmp;
+				swapped = true;
+			}
+		}
+		n--;
+	} 
+	while(swapped == true);
+}
+
+bool isLeft(Vector3f a, Vector3f b, Vector3f c){
+	std::cout << a[0] << " " << a[1] << " to " << b[0] << " " << b[1] << "is left of " << c[0] << " " << c[1] << " ";
+	std::cout << (((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])) > 0) << std::endl;
+    return ((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])) > 0;
+}
+
+std::vector<Vector3f> SWRBSolver::getConvexHull8XY(Vector3f* vertices){
+	std::cout << "vertices before sorting" << std::endl;
+	for(int l=0; l<8; l++){
+		std::cout << vertices[l][0] << " " << vertices[l][1] << " " << vertices[l][2] << std::endl;
+	}
+	bubbleSortVert(1, vertices);
+	if(vertices[0][0] == vertices[1][0]){
+		bubbleSortVert(0, vertices);
+	}
+	std::cout << "vertices after sorting" << std::endl;
+	for(int l=0; l<8; l++){
+		std::cout << vertices[l][0] << " " << vertices[l][1] << " " << vertices[l][2] << std::endl;
+	}
+	Vector3f pointOnHull = vertices[0];
+	Vector3f endpoint;
+	std::vector<Vector3f> P;
+	int i=0;
+	do{
+		P.push_back(pointOnHull);
+		endpoint = vertices[0];
+		for(int j=0; j<8; j++){
+			if((endpoint == pointOnHull) || isLeft(P[i], endpoint, vertices[j]))
+				endpoint = vertices[j];
+		}
+		i++;
+		pointOnHull = endpoint;
+	} while(endpoint != P[0]);
+
+	return P;
+}
+
+void SWRBSolver::testSorting(){
+	ofstream vertices_data_x;
+	ofstream vertices_data_y;
+	ofstream vertices_data;
+	vertices_data_x.open("testdata//verticesx.txt");
+	vertices_data_y.open("testdata//verticesy.txt");
+	vertices_data.open("testdata//vertices.txt");
+	Vector3f vertices[8] = {Vector3f(0, 1, 1), Vector3f(1, 1, 0), Vector3f(0, 2, 0), Vector3f(0, 1, 2), Vector3f(-1, 1, 0), Vector3f(0, 1, -2), Vector3f(0, 2, 0), Vector3f(-1, -2, 0)};
+	for(int i=0; i<8; i++){
+		vertices_data << vertices[i][0] << endl;
+		vertices_data << vertices[i][1] << endl;
+		vertices_data << vertices[i][2] << endl;
+	}
+		
+
+	std::vector<Vector3f> P = getConvexHull8XY(vertices);
+	for(int i=0; i<P.size(); i++)
+		cout << P[i][0] << " " << P[i][1] << " " << P[i][2] << endl;
+
 }
