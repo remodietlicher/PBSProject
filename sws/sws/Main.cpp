@@ -1,9 +1,7 @@
-
-
-
 #include <iostream>
 #include <stdlib.h>
 #include <algorithm>
+#include <fstream>
 
 
 #ifdef __APPLE__
@@ -34,9 +32,10 @@ unsigned int g_height;
 // image buffer
 float* g_buffer;
 
-SWSolver *solver = nullptr;
+SWRBSolver *solver = nullptr;
 SWViewer *viewer = nullptr;
 Exporter * exporter = nullptr;
+Box *box = nullptr;
 
 
 //foward declarations
@@ -48,8 +47,10 @@ void loadScene() {
 	g_height = 1000;
 
 	int res[2] = { 100, 100 };
+
+	box = new Box(Vector3f(0.5f, 0.5f, 1.0f), 1, Vector3f(0.2f, 0.0f, 0.0f),  Vector3f(0.0f, .2f, 0.0f),  Vector3f(0.0f, 0.0f, 0.2f));
 	
-	solver = new SWSolver(res[0], res[1], 1, 1, 0.0006f);
+	solver = new SWRBSolver(res[0], res[1], 1, 1, 0.0006f, box);
 	viewer = new SWViewer(solver);
 	exporter = new Exporter();
 
@@ -57,11 +58,12 @@ void loadScene() {
 	std::vector<std::vector<float>> heightmaps;
 	std::vector<float> initEta;
 	initEta.resize(res[0] * res[1]);
-	float initialEta = 10.0f;
+	float initialEta = 1.0f;
 	for (int i = 0; i < res[0]; i++)
 	for (int j = 0; j < res[1]; j++){
-		if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
-		else initEta[INDEX(i, j)] = initialEta;
+		//if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
+		//else initEta[INDEX(i, j)] = initialEta;
+		initEta[INDEX(i, j)] = initialEta;
 	}
 
 	solver->setEta(initEta);
@@ -267,6 +269,30 @@ int main(int argc, char** argv) {
 
 	loadScene();
 
+	ofstream heightmap_data;
+	ofstream body_data;
+	heightmap_data.open("testdata//heightmapRB.txt");
+	body_data.open("testdata//body.txt");
+
+	for(int t=0; t<100; t++){
+		cout << "writing to file..." << t << endl;
+		std::vector<float> heightmap = solver->getHeightMap();
+		Box* body = solver->getBody();
+		body_data << body->x[0] << endl;
+		body_data << body->x[1] << endl;
+		body_data << body->x[2] << endl;
+		for(int i=0; i<solver->getXRes(); i++)
+			for(int j=0; j<solver->getYRes(); j++){
+				int index = i*solver->getXRes() + j;
+				heightmap_data << heightmap[index] << endl;
+			}
+		solver->advanceTimestep();
+		cout << "iteration step: " << t << endl;
+	}
+
+	heightmap_data.flush();
+	body_data.flush();
+
 /*
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -287,9 +313,6 @@ int main(int argc, char** argv) {
 	glutMainLoop();
 #endif
 */
-	SWRBSolver swrb(0, 0, 0.0f, 0.0f, 0.0f, Box(Vector3f(0, 0, 0), 0.0f, Vector3f(0, 0, 0), Vector3f(0, 0, 0), Vector3f(0, 0, 0)));
-
-	swrb.testSorting();
 
 
 	return 0;

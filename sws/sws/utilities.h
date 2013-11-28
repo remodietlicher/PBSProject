@@ -1291,7 +1291,7 @@ private:
 		if( fabs(d) <= eps )
 		{
 			// Need to make sure something gets written to \c M:
-			M.setValues(std::numeric_limits<Scalar>::quiet_NaN());
+//			M.setValues(std::numeric_limits<Scalar>::quiet_NaN());
 
 			return false;
 		}

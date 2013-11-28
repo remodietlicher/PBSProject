@@ -1,7 +1,7 @@
 #include "viewer.h"
 #include <stdlib.h>
 
-SWViewer::SWViewer(SWSolver *sws){
+SWViewer::SWViewer(SWRBSolver *sws){
 	this->sws = sws;
 	this->normals = new Vec3f[sws->getXRes()*sws->getYRes()];
 	this->heights = new float[sws->getXRes()*sws->getYRes()];

@@ -9,6 +9,7 @@
 
 #include <vector>
 #include "rigidbody.h"
+#include "rbs.h"
 
 class SWSolver{
 protected:
@@ -44,19 +45,23 @@ protected:
 	void updateVelocity();
 };
 
-class SWRBSolver : SWSolver {
+class SWRBSolver : public SWSolver {
 private:
-	Box box;
+	Box *box;
+	RigidBodySolver rbs;
 	std::vector<float> displ_old, displ_new;
+	float alpha;
 public:
-	SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box b);
+	SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box *b);
 	void advanceTimestep();
+	Box* getBody();
 	void testSorting(); // only for debug purposes
 private:
 	void handleBodyInteraction();
-	std::vector<float> getProjectedIndices();
+	void estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, int &y_min, int &y_max);
 	std::vector<Vector3f> getConvexHull8XY(Vector3f *vertices);
-	void bubbleSortVert(int coord, Vector3f A[8]);
+	void bubbleSortVert(int coord, Vector3f *A, int n);
+	bool calculateDisplacement(int i, int j, float &b, Vector3f &r);
 };
 
 

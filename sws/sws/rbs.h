@@ -5,15 +5,15 @@
 
 class RigidBodySolver{
 private:
-	Box body;
+	Box* body;
 public:
-	RigidBodySolver(Box body);
-	void advanceTimestep(float dt, Vector3f* F, Vector3f* r, int N);
+	RigidBodySolver(Box *body);
+	void advanceTimestep(float dt, std::vector<Vector3f> F, std::vector<Vector3f> r);
 	Box* getBody();
 
 private:
 	Matrix3x3f star(Vector3f v);
-	void sumExternalForces(Vector3f* F, Vector3f* r, int N);
+	void sumExternalForces(std::vector<Vector3f> F, std::vector<Vector3f> r);
 	void performEulerIntegration(float dt);
 	void setBodyBox();
 };
