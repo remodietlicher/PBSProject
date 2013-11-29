@@ -50,7 +50,7 @@ private:
 	Box *box;
 	RigidBodySolver rbs;
 	std::vector<float> displ_old, displ_new;
-	float alpha;
+	float alpha, rho;
 public:
 	SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box *b);
 	void advanceTimestep();
@@ -58,6 +58,7 @@ public:
 	void testSorting(); // only for debug purposes
 private:
 	void handleBodyInteraction();
+	void setDisplacement(std::vector<Vector3f> &positions, int x_min, int x_max, int y_min, int y_max, bool* isIntersecting);
 	void estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, int &y_min, int &y_max);
 	std::vector<Vector3f> getConvexHull8XY(Vector3f *vertices);
 	void bubbleSortVert(int coord, Vector3f *A, int n);

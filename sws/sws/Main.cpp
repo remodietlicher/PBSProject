@@ -46,11 +46,11 @@ void loadScene() {
 	g_width  = 1000;
 	g_height = 1000;
 
-	int res[2] = { 100, 100 };
+	int res[2] = { 10, 10 };
 
-	box = new Box(Vector3f(0.5f, 0.5f, 1.0f), 1, Vector3f(0.2f, 0.0f, 0.0f),  Vector3f(0.0f, .2f, 0.0f),  Vector3f(0.0f, 0.0f, 0.2f));
+	box = new Box(Vector3f(0.5f, 0.5f, 1.1f), 0.1, Vector3f(0.2f, 0.2f, 0.0f),  Vector3f(0.0f, 0.2f, 0.2f),  Vector3f(0.2f, 0.0f, 0.2f));
 	
-	solver = new SWRBSolver(res[0], res[1], 1, 1, 0.0006f, box);
+	solver = new SWRBSolver(res[0], res[1], 1, 1, 0.0001f, box);
 	viewer = new SWViewer(solver);
 	exporter = new Exporter();
 
@@ -61,9 +61,9 @@ void loadScene() {
 	float initialEta = 1.0f;
 	for (int i = 0; i < res[0]; i++)
 	for (int j = 0; j < res[1]; j++){
-		//if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
-		//else initEta[INDEX(i, j)] = initialEta;
-		initEta[INDEX(i, j)] = initialEta;
+		if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
+		else initEta[INDEX(i, j)] = initialEta;
+		//initEta[INDEX(i, j)] = initialEta;
 	}
 
 	solver->setEta(initEta);
@@ -273,19 +273,23 @@ int main(int argc, char** argv) {
 	ofstream body_data;
 	heightmap_data.open("testdata//heightmapRB.txt");
 	body_data.open("testdata//body.txt");
+	int nSteps = 100;
+	int timestepsPerFrame = nSteps/10;
 
-	for(int t=0; t<100; t++){
+	for(int t=0; t<nSteps; t++){
 		cout << "writing to file..." << t << endl;
 		std::vector<float> heightmap = solver->getHeightMap();
 		Box* body = solver->getBody();
 		body_data << body->x[0] << endl;
 		body_data << body->x[1] << endl;
 		body_data << body->x[2] << endl;
-		for(int i=0; i<solver->getXRes(); i++)
-			for(int j=0; j<solver->getYRes(); j++){
-				int index = i*solver->getXRes() + j;
-				heightmap_data << heightmap[index] << endl;
-			}
+		if(t%timestepsPerFrame == 0){
+			for(int i=0; i<solver->getXRes(); i++)
+				for(int j=0; j<solver->getYRes(); j++){
+					int index = i*solver->getXRes() + j;
+					heightmap_data << heightmap[index] << endl;
+				}
+		}
 		solver->advanceTimestep();
 		cout << "iteration step: " << t << endl;
 	}
