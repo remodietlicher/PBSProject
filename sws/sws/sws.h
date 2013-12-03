@@ -55,6 +55,7 @@ public:
 	SWRBSolver(int xRes, int yRes, float xSize, float ySize, float dt, Box *b);
 	void advanceTimestep();
 	Box* getBody();
+	std::vector<float>* getDisplacement();
 	void testSorting(); // only for debug purposes
 private:
 	void handleBodyInteraction();

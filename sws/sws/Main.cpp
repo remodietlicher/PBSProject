@@ -41,14 +41,38 @@ Box *box = nullptr;
 //foward declarations
 //void run_solver();
 
+void traceBox(){
+	ofstream box_init_data;
+	box_init_data.open("testdata//boxinit.txt");
+
+	Vector3f vertex;
+	for(int i=0; i<2; i++)
+		for(int j=0; j<2; j++)
+			for(int l=0; l<2; l++){
+				vertex = box->x + (box->x0*pow(-1, i)+box->y0*pow(-1, j)+box->z0*pow(-1, l))*0.5f;
+				box_init_data << vertex[0] << endl;
+				box_init_data << vertex[1] << endl;
+				box_init_data << vertex[2] << endl;
+			}
+	box_init_data.flush();
+}
+
 
 void loadScene() {
 	g_width  = 1000;
 	g_height = 1000;
 
-	int res[2] = { 10, 10 };
+	int res[2] = { 1000, 1000 };
 
-	box = new Box(Vector3f(0.5f, 0.5f, 1.1f), 0.1, Vector3f(0.2f, 0.2f, 0.0f),  Vector3f(0.0f, 0.2f, 0.2f),  Vector3f(0.2f, 0.0f, 0.2f));
+	Matrix3x3f Rx(1, 0, 0, 0, 0.707, -0.707, 0, 0.707, 0.707); // rotate by 45 deg around x axis
+	Matrix3x3f Rz(0.707, -0.707, 0, 0.707, 0.707, 0, 0, 0, 1); // rotate by 45 deg around z axis
+	Matrix3x3f Ry(0.707, 0, -0.707, 0, 1, 0, 0.707, 0, 0.707); // rotate by 45 deg around y axis
+
+	//box = new Box(Vector3f(0.5f, 0.5f, 1.0f), 0.1, Rx*Vector3f(0.2f, 0.0f, 0.0f),  Rx*Vector3f(0.0f, 0.2f, 0.0f),  Rx*Vector3f(0.0f, 0.0f, 0.2f));
+	box = new Box(Vector3f(0.5f, 0.5f, 1.0f), 0.1, Rz*Rx*Vector3f(0.2f, 0.0f, 0.0f),  Rz*Rx*Vector3f(0.0f, 0.2f, 0.0f),  Rz*Rx*Vector3f(0.0f, 0.0f, 0.2f));
+	//box = new Box(Vector3f(0.5f, 0.5f, 1.0f), 0.1, Ry*Rz*Rx*Vector3f(0.2f, 0.0f, 0.0f),  Ry*Rz*Rx*Vector3f(0.0f, 0.2f, 0.0f),  Ry*Rz*Rx*Vector3f(0.0f, 0.0f, 0.2f));
+	//box = new Box(Vector3f(0.5f, 0.5f, 1.0f), 10, Vector3f(0.4f, 0.0f, 0.0f),  Vector3f(0.0f, 0.4f, 0.0f),  Vector3f(0.0f, 0.0f, 0.4f));
+	traceBox();
 	
 	solver = new SWRBSolver(res[0], res[1], 1, 1, 0.0001f, box);
 	viewer = new SWViewer(solver);
@@ -61,9 +85,9 @@ void loadScene() {
 	float initialEta = 1.0f;
 	for (int i = 0; i < res[0]; i++)
 	for (int j = 0; j < res[1]; j++){
-		if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
-		else initEta[INDEX(i, j)] = initialEta;
-		//initEta[INDEX(i, j)] = initialEta;
+		//if (i < 4 * res[0] / 6 && i>2 * res[0] / 6 && j<4 * res[1] / 6 && j>2 * res[1] / 6) initEta[INDEX(i, j)] = initialEta * 2.0;
+		//else initEta[INDEX(i, j)] = initialEta;
+		initEta[INDEX(i, j)] = initialEta;
 	}
 
 	solver->setEta(initEta);
@@ -270,15 +294,18 @@ int main(int argc, char** argv) {
 	loadScene();
 
 	ofstream heightmap_data;
+	ofstream displacement_data;
 	ofstream body_data;
 	heightmap_data.open("testdata//heightmapRB.txt");
+	displacement_data.open("testdata//displacement.txt");
 	body_data.open("testdata//body.txt");
-	int nSteps = 100;
+	int nSteps = 10;
 	int timestepsPerFrame = nSteps/10;
 
 	for(int t=0; t<nSteps; t++){
-		cout << "writing to file..." << t << endl;
-		std::vector<float> heightmap = solver->getHeightMap();
+		cout << "writing to file..." << endl;
+		//std::vector<float> heightmap = solver->getHeightMap();
+		std::vector<float> displacement = *solver->getDisplacement();
 		Box* body = solver->getBody();
 		body_data << body->x[0] << endl;
 		body_data << body->x[1] << endl;
@@ -287,7 +314,8 @@ int main(int argc, char** argv) {
 			for(int i=0; i<solver->getXRes(); i++)
 				for(int j=0; j<solver->getYRes(); j++){
 					int index = i*solver->getXRes() + j;
-					heightmap_data << heightmap[index] << endl;
+					//heightmap_data << heightmap[index] << endl;
+					displacement_data << displacement[index] << endl;
 				}
 		}
 		solver->advanceTimestep();
@@ -295,6 +323,7 @@ int main(int argc, char** argv) {
 	}
 
 	heightmap_data.flush();
+	displacement_data.flush();
 	body_data.flush();
 
 /*

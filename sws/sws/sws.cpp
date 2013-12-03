@@ -228,8 +228,8 @@ Box* SWRBSolver::getBody(){
 }
 
 void SWRBSolver::advanceTimestep(){
-	cout << "computing shallow water timestep..." << endl;
-	SWSolver::advanceTimestep();
+//	cout << "computing shallow water timestep..." << endl;
+//	SWSolver::advanceTimestep();
 
 	cout << "setting displacements..." << endl;
 	// calculate vertices of the box (com + 1/2*(x0 + y0 + z0): +++, ++-, +--, ...)
@@ -285,7 +285,7 @@ void SWRBSolver::advanceTimestep(){
 	positions.push_back(box->x);
 
 	rbs.advanceTimestep(dt, forces, positions);
-//	delete[] isIntersecting;
+
 	displ_old = displ_new; // note that the vector class has an overloaded "=" which copies the content
 }
 
@@ -314,14 +314,18 @@ void SWRBSolver::estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, i
 	if(y_max>res[1]) y_max = res[1]-2;
 }
 
+
+
 //! displ is the "height" of the displacement and r is the position on the surface of the body where the intersection happens
 // r is later on used to calculate the torque excerted on the body
 bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
-	Vector3f P_line((float(i)+0.5f)/res[0], (float(j)+0.5f)/res[0], 0.0f);
+	Vector3f P_line(float(i)/res[0], float(j)/res[0], 0.0f);
 	Vector3f V(0.0f, 0.0f, 1.0f);
 
 	Vector3f vertex_bl(box->x - (box->x0 + box->y0 + box->z0)*0.5f);
 	Vector3f vertex_tr(box->x + (box->x0 + box->y0 + box->z0)*0.5f);
+
+	//cout << box->x0.length() + box->y0.length() + box->z0.length() << " " << box->R.det() << endl;
 
 	// define planes to make things easier
 	Vector3f planeVector1[6];
@@ -345,10 +349,10 @@ bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
 	bool isIntersecting;
 	Vector3f P[2];
 	// loop through planes and look for intersections
-	while(l<6 && counter<2){		// remember that the box is convex, if we change to non-convex boats, counter can be >2
-		Vector3f N = planeVector1[l].cross(planeVector2[l]);
-		if((V*N) < 0.001) {		// do not consider the case where the plane is almost perpendicular to the x-y-plane
-			l++;					// this will most probably lead to an intersection far away from the rectangle of interest
+	while(l<6 && counter<2){								// remember that the box is convex, if we change to non-convex boats, counter can be >2
+		Vector3f N = (planeVector1[l].cross(planeVector2[l])).normalized();
+		if(abs((V*N)) < 0.001) {							// do not consider the case where the plane is almost perpendicular to the x-y-plane
+			l++;											// this will most probably lead to an intersection far away from the rectangle of interest
 			continue;
 		}
 		float t = (planePoint[l]-P_line)*N/(V*N);
@@ -357,16 +361,18 @@ bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
 		// if the intersection point is further away from the chosen vertex than p1+p2 its not on the box
 		float projectP1 = (P[counter]-planePoint[l])*(planeVector1[l].normalized());
 		float projectP2 = (P[counter]-planePoint[l])*(planeVector2[l].normalized());
-		if(projectP1 < planeVector1[l].length() &&			
-		   projectP2 < planeVector2[l].length() &&			// is P within a rectangle spanned by |P1| and |P2|?
+		float epsilon = -0.001f;
+		if(projectP1 < (planeVector1[l].length() + epsilon) &&			
+		   projectP2 < (planeVector2[l].length() + epsilon) &&			// is P within a rectangle spanned by |P1| and |P2|?
 		   projectP1 > 0.0f &&
-		   projectP2 > 0.0f) {
+		   projectP2 > 0.0f) {											// is P in the "direction" of P1 and P2
 			counter++;
 		}
 		l++;
 	}
 	// case of intersection (note that the box is convex)
 	// for convenience set P[0] to be the lower end (lower z) of the body and P[1] to be the upper end (P[0]<P[1] always)
+	if(abs(P[0][2]-P[1][2]) < 0.0001) counter = 0;	// neglect edges
 	if(counter == 2){
 		bubbleSortVert(2, P, 2);
 		float t0 = P[0][2];
@@ -382,19 +388,20 @@ bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
 		}
 		else displ = h - t0;					// only h-t0 is under water
 	}
-	// case of no intersection
-	else if(counter == 0){
+	// case of no intersection or intersecting close to the edges of the box
+	else if(counter == 0 || counter == 1){
 		displ = 0.0f;
 		isIntersecting = false;
-	}
-	else if(counter == 1){
-		cout << "only 1 intersection" << endl;
 	}
 	// something weird happened!
 	else
 		cout << "weird behaviour" << endl;
 
 	return isIntersecting;
+}
+
+std::vector<float>* SWRBSolver::getDisplacement(){
+	return &this->displ_new;
 }
 
 void SWRBSolver::bubbleSortVert(int coord, Vector3f *A, int n){
