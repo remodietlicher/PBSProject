@@ -49,8 +49,9 @@ GLuint gVertexZ  = 0; // The water
 GLuint gVertexG  = 0; // The ground
 GLuint gNormal   = 0; // the normal of the water
 GLuint gIndex    = 0; // the triangle mesh indices
-// GLuint gBox      = 0;
-// GLuint gBoxIndex = 0;
+GLuint gBoxVertXY= 0;
+GLuint gBoxVertZ = 0;
+GLuint gBoxIndex = 0;
 
 // globals for CPU
 GLfloat *vertexXY; // vertex positons in CPU RAM
@@ -203,59 +204,65 @@ static void LoadHeigthGPU(Sw_grid *grid) {
 
 }
 
-// static void LoadBoxGPU(Box *box) {
+static void LoadBoxGPU(Box *box) {
 
-//     int nTriangles = 12;
-//     int nBoxIndices = 12*3;
+    int nTriangles = 12;
+    int nBoxIndices = 12*3;
 
-//     GLfloat* boxverts[8];
-//     for(int i=0; i<2; i++)
-//         for(int j=0; j<2; j++)
-//             for(int l=0; l<2; l++){
-//                 boxverts[i + j*2 + l*4] = box->x + (box->x0*pow(-1, i)+box->y0*pow(-1, j)+box->z0*pow(-1, l))*0.5f;
-//             }
+    // make and bind the VAO
+    glGenVertexArrays(1, &gVAO);
+    glBindVertexArray(gVAO);
 
-//     // int indexData[12];
-//     // for (int i = 0; i < 2; ++i)
-//     // for (int j = 0; j < 2; ++j)
-//     // for (int k = 0; k < 2; ++k)
-//     // {
-//     //     int index = i + j*2 + l*4;
-//     //     indexData[index*3 + 0] = i + j*2 + l*4;
-//     //     indexData[index*3 + 1] = i+1 + j*2 + l*4;
-//     // }
+    GLfloat *boxvertsXY = new GLfloat[8*2];
+    GLfloat *boxvertsZ  = new GLfloat[8];
+    for(int i=0; i<2; i++)
+        for(int j=0; j<2; j++)
+            for(int l=0; l<2; l++){
+                Vector3f pos = box->x + (box->x0*pow(-1, i)+box->y0*pow(-1, j)+box->z0*pow(-1, l))*0.5f;
+                boxvertsXY[(i + j*2 + l*4)*2 + 0] = pos.x();
+                boxvertsXY[(i + j*2 + l*4)*2 + 1] = pos.y();
+                boxvertsZ[  i + j*2 + l*4    + 0] = pos.z();
+            }
 
-//     int indexData[12] = {
-//         0,1,2,
-//         1,3,2,
-//         5,1,3,
-//         5,3,7,
-//         4,5,7,
-//         4,7,6,
-//         6,7,3,
-//         6,3,2,
-//         4,0,2,
-//         4,2,6,
-//         4,5,1,
-//         4,1,0
-//     }
+    GLuint indexData0[] = {
+        0,1,2,
+        1,3,2,
+        5,1,3,
+        5,3,7,
+        4,5,7,
+        4,7,6,
+        6,7,3,
+        6,3,2,
+        4,0,2,
+        4,2,6,
+        4,5,1,
+        4,1,0
+    };
 
-//     // make and bind the VAO
-//     glGenVertexArrays(1, &gVAO);
-//     glBindVertexArray(gVAO);
+    GLuint *indexData = new GLuint[nBoxIndices];
+    for (int i = 0; i < nBoxIndices; ++i)
+    {
+        indexData[i] = indexData0[i];
+    }
 
-//     glGenBuffers(1, &gBox);
-//     glBindBuffer(GL_ARRAY_BUFFER, gBox);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*8, vertexG, GL_STATIC_DRAW);
+    glGenBuffers(1, &gBoxVertXY);
+    glBindBuffer(GL_ARRAY_BUFFER, gBoxVertXY);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*8*2, boxvertsXY, GL_STATIC_DRAW);
 
-//     glGenBuffers(1, &gBoxIndex);
-//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gBoxIndex);
-//     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*nBoxIndices, indexData, GL_STATIC_DRAW);
-    
-//     // unbind the VAO
-//     glBindVertexArray(0); //CANNOT DO: Open Gl reports 'invalid operation'
+    glGenBuffers(1, &gBoxVertZ);
+    glBindBuffer(GL_ARRAY_BUFFER, gBoxVertZ);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*8, boxvertsZ, GL_STATIC_DRAW);
 
-// }
+    glGenBuffers(1, &gBoxIndex);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gBoxIndex);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*nBoxIndices, indexData, GL_STATIC_DRAW);
+
+    // unbind the VAO
+    glBindVertexArray(0); //CANNOT DO: Open Gl reports 'invalid operation'
+
+    // delete boxvertsXY, boxvertsZ;
+
+}
 
 // draws a single frame
 static void Render(Sw_grid *grid) {
@@ -265,6 +272,7 @@ static void Render(Sw_grid *grid) {
     int nCellsTot = nCellsX*nCellsY;
     int nTriangles = nCellsTot * 2; // 2 triangles per cell
     int nIndices = nTriangles*3;
+    int nBoxIndices = 12*3;
 
     // clear everything
     glClearColor(0, 0, 0, 1); // black
@@ -349,6 +357,41 @@ static void Render(Sw_grid *grid) {
                    );
     
     
+    glDisableVertexAttribArray(gProgram->attrib("vertZ"));
+    glDisableVertexAttribArray(gProgram->attrib("vertXY"));
+
+    /////////////////// BOX //////////////
+    glEnableVertexAttribArray(gProgram->attrib("vertXY"));
+    glBindBuffer(GL_ARRAY_BUFFER, gBoxVertXY);
+    glVertexAttribPointer(
+                          gProgram->attrib("vertXY"),                  // attribute
+                          2,                  // size = size of vector to pass to vertex shader
+                          GL_FLOAT,           // type
+                          GL_FALSE,           // normalized?
+                          0,                  // stride
+                          (void*)0            // array buffer offset
+                          );
+
+    glEnableVertexAttribArray(gProgram->attrib("vertZ"));
+    glBindBuffer(GL_ARRAY_BUFFER, gBoxVertZ);
+    glVertexAttribPointer(
+                          gProgram->attrib("vertZ"),                  // attribute
+                          1,                  // size = size of vector to pass to vertex shader
+                          GL_FLOAT,           // type
+                          GL_FALSE,           // normalized?
+                          0,                  // stride
+                          (void*)0            // array buffer offset
+                          );
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gBoxIndex);
+    
+    glDrawElements(
+                   GL_TRIANGLES,      // mode
+                   nBoxIndices,          // count = number of indices
+                   GL_UNSIGNED_INT,   // type
+                   0                  // element array buffer offset
+                   );
+
     glDisableVertexAttribArray(gProgram->attrib("vertZ"));
     glDisableVertexAttribArray(gProgram->attrib("vertXY"));
 
@@ -694,6 +737,7 @@ void AppMain() {
 
         // Copy height field to GPU and compute normals
         LoadHeigthGPU(grid);
+        LoadBoxGPU(box);
 
         // draw one frame
         Render(grid);
