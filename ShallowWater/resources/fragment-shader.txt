@@ -1,0 +1,17 @@
+#version 150
+
+in vec3 normalf;
+in vec3 vertf;
+
+out vec4 finalColor;
+
+void main() {
+    vec3 light = vec3(5, 10, 20);
+    vec3 ambient = 0.1 * vec3(1.0, 1.0, 1.0);
+    vec3 surfaceToLight = normalize(light - vertf);
+    vec3 normal = normalize(normalf);
+    float diffuse = dot(normal, surfaceToLight);
+    diffuse = clamp(diffuse, 0., 0.9);
+    vec3 color = diffuse * vec3(0.2, 0.4, 1.0) + ambient;
+    finalColor = vec4(color, 1.0);
+}
