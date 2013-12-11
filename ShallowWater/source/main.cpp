@@ -411,7 +411,7 @@ public:
     };
 };
 
-void initialConditionBeach(Sw_grid *grid){
+void initialConditions(Sw_grid *grid){
     const int xRes = grid->xRes;
     const int yRes = grid->yRes;
     
@@ -429,19 +429,15 @@ void initialConditionBeach(Sw_grid *grid){
     for (int i = 0; i < xRes; ++i)
     for (int j = 0; j < yRes; ++j){
         int index = i + j*xRes;
-        
-        if (j < yRes*1/4)
+        if (i > xRes/4 && i < xRes*3/4 && j > yRes/4 && j < yRes*3/4)
             eta[index] = 0.1;
         else
             eta[index] = 0.0;
-
-        if (j > yRes*3/4)
-            ground[index] = 0.2 * (float)(j-yRes*3/4)*grid->dx;
-        else
-            ground[index] = 0.0;
+        ground[index] = 0.0;
         height[index] = ground[index] + eta[index];
         velx[index] = 0.0;
         vely[index] = 0.0;
+        
         neweta   [index] = 0.0;
         newheight[index] = 0.0;
         newground[index] = 0.0;
