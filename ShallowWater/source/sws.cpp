@@ -138,32 +138,17 @@ void SWSolver::setBoundary(){
 	}
 }
 
-void SWSolver::advanceTimestep(float time_goal){
-		float *eta = grid->oldFields[ETA];
-		int xRes = grid->xRes;
-		int yRes = grid->yRes;
-		float H = 0.;
-		for (int i = 0; i < xRes - 1; i++)
-		for (int j = 0; j < yRes - 1; j++)
-			H += eta[i+j*xRes];
-		H /= (float)(xRes*yRes);
-		float maxdt = 0.1*grid->dx / sqrt(g*H);
-		
-		while(time < time_goal){
-			
-			dt = std::min(maxdt, time_goal - time);
-
+void SWSolver::advanceTimestep(float _dt){
+			dt = _dt;
 			advect(ETA);
-			advect(VELX);
-			advect(VELY);
 			grid->switchOldNew(ETA);
+			advect(VELX);
 			grid->switchOldNew(VELX);
+			advect(VELY);
 			grid->switchOldNew(VELY);
 			updateHeight();
 			updateVelocity();
 			setBoundary();
-			time += dt;
-		}
 
 }
 
@@ -209,4 +194,255 @@ float SWSolver::computePotentialEnergy(){
 		energy += g*height[i+j*grid->xRes];
 	}
 	return energy;
+}
+
+
+SWRBSolver::SWRBSolver(Sw_grid *_grid, Box *b) : 
+	box(b),
+	grid(_grid),
+	alpha(1.0f),
+	rho(100.0f),
+	g(9.81f),
+	rbs(b)
+{
+	int xRes = grid->xRes;
+	int yRes = grid->yRes;
+	displ_old.resize(xRes*yRes);
+	displ_new.resize(xRes*yRes);
+}
+
+Box* SWRBSolver::getBody(){
+	return this->box;
+}
+
+void SWRBSolver::advanceTimestep(float dt){
+	float *height = grid->oldFields[HEIGHT];
+	float *vel_x = grid->oldFields[VELX];
+	float *vel_y = grid->oldFields[VELY];
+	float dx = grid->dx;
+	cout << "setting displacements..." << endl;
+	// calculate vertices of the box (com + 1/2*(x0 + y0 + z0): +++, ++-, +--, ...)
+	Vector3f vertices[8];
+	int cnt = 0;
+	for(int i=0; i<2; i++)
+		for(int j=0; j<2; j++)
+			for(int l=0; l<2; l++){
+				vertices[cnt] = box->x + (box->x0*pow(-1, i)+box->y0*pow(-1, j)+box->z0*pow(-1, l))*0.5f;
+				cnt++;
+			}
+
+	int x_min, x_max, y_min, y_max;
+	estimateIndices(vertices, x_min, x_max, y_min, y_max);
+	bool* isIntersecting = new bool[(x_max-x_min)*(y_max-y_min)];
+	std::vector<Vector3f> positions;
+	Vector3f r;
+	// set the displacements
+	int index = 0;
+	for(int i=x_min; i<x_max; i++)
+		for(int j=y_min; j<y_max; j++){
+			isIntersecting[index] = calculateDisplacement(i, j, displ_new[INDEX(i, j)], r);
+			if(isIntersecting[index])
+				positions.push_back(r);
+			index++;
+		}
+
+	cout << "handling body interaction..." << endl;
+	std::vector<Vector3f> forces;
+	index = 0;
+	for(int i=x_min; i<x_max; i++)
+		for(int j=y_min; j<y_max; j++){
+			// handle body --> water
+			// set height of neighbouring cells
+			float dh = (displ_new[INDEX(i, j)]-displ_old[INDEX(i, j)]);
+			height[INDEX(i, j)] -= dh;
+			height[INDEX(i+1, j)] += dh*0.25*alpha;
+			height[INDEX(i, j+1)] += dh*0.25*alpha;
+			height[INDEX(i-1, j)] += dh*0.25*alpha;
+			height[INDEX(i, j-1)] += dh*0.25*alpha;
+
+			// handle water --> body
+			if(isIntersecting[index]){
+				float hb = 1;  // what is hb in Thue07 eq (11)? 
+				float buoyancy = g*dx*dx*displ_new[INDEX(i, j)]*rho;
+				forces.push_back(Vector3f(hb*vel_x[INDEX(i, j)], hb*vel_y[INDEX(i, j)], buoyancy));
+			}
+			index++;
+		}
+
+	// add gravity
+	forces.push_back(Vector3f(0.0f, 0.0f, -9.81f));
+	positions.push_back(box->x);
+
+	rbs.advanceTimestep(dt, forces, positions);
+
+	displ_old = displ_new; // note that the vector class has an overloaded "=" which copies the content
+}
+
+void SWRBSolver::estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, int &y_min, int &y_max){
+	int res[] = {
+		grid->xRes,
+		grid->yRes
+	};
+	float *height = grid->oldFields[HEIGHT];
+//	std::vector<Vector3f> convHull;
+
+	// for more accurate estimate of indices
+/*	convHull = getConvexHull8XY(vertices);
+	for(unsigned int i=0; i<convHull.size(); i++)
+		cout << convHull[i][0] << " " << convHull[i][1] << " " << convHull[i][2] << endl;
+*/
+
+	// calculate bounding box on grid for a rough estimate of grid points
+	// get points with x_max and x_min
+	bubbleSortVert(0, vertices, 8);
+	x_min = int(vertices[0][0]*res[0]);		// always round down for minimal index
+	x_max = int(vertices[7][0]*res[0]+1);	// always round up for maximal index
+	bubbleSortVert(1, vertices, 8);
+	y_min = int(vertices[0][1]*res[1]);
+	y_max = int(vertices[7][1]*res[1]+1);
+
+	// clamp range of access to boundary values
+	if(x_min<0) x_min = 1;
+	if(y_min<0) y_min = 1;
+	if(x_max>res[0]) x_max = res[0]-2;
+	if(y_max>res[1]) y_max = res[1]-2;
+}
+
+
+
+//! displ is the "height" of the displacement and r is the position on the surface of the body where the intersection happens
+// r is later on used to calculate the torque excerted on the body
+bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
+	int res[] = {
+		grid->xRes,
+		grid->yRes
+	};
+	float *height = grid->oldFields[HEIGHT];
+	Vector3f P_line(float(i)/res[0], float(j)/res[0], 0.0f);
+	Vector3f V(0.0f, 0.0f, 1.0f);
+
+	Vector3f vertex_bl(box->x - (box->x0 + box->y0 + box->z0)*0.5f);
+	Vector3f vertex_tr(box->x + (box->x0 + box->y0 + box->z0)*0.5f);
+
+	//cout << box->x0.length() + box->y0.length() + box->z0.length() << " " << box->R.det() << endl;
+
+	// define planes to make things easier
+	Vector3f planeVector1[6];
+	Vector3f planeVector2[6];
+	Vector3f planePoint[6];
+	planeVector1[0] = box->x0;
+	planeVector2[0] = box->y0;
+	planeVector1[1] = box->x0;
+	planeVector2[1] = box->z0;
+	planeVector1[2] = box->z0;
+	planeVector2[2] = box->y0;
+	for(int k=0; k<3; k++){
+		planePoint[k] = vertex_bl;
+		planeVector1[k+3] = -planeVector1[k];
+		planeVector2[k+3] = -planeVector2[k];
+		planePoint[k+3] = vertex_tr;
+	}
+
+	int counter = 0;
+	int l = 0;
+	bool isIntersecting;
+	Vector3f P[2];
+	// loop through planes and look for intersections
+	while(l<6 && counter<2){								// remember that the box is convex, if we change to non-convex boats, counter can be >2
+		Vector3f N = (planeVector1[l].cross(planeVector2[l])).normalized();
+		if(fabs((V*N)) < 0.001) {							// do not consider the case where the plane is almost perpendicular to the x-y-plane
+			l++;											// this will most probably lead to an intersection far away from the rectangle of interest
+			continue;
+		}
+		float t = (planePoint[l]-P_line)*N/(V*N);
+		P[counter] = P_line + t*V;
+
+		// if the intersection point is further away from the chosen vertex than p1+p2 its not on the box
+		float projectP1 = (P[counter]-planePoint[l])*(planeVector1[l].normalized());
+		float projectP2 = (P[counter]-planePoint[l])*(planeVector2[l].normalized());
+		float epsilon = -0.001f;
+		if(projectP1 < (planeVector1[l].length() + epsilon) &&			
+		   projectP2 < (planeVector2[l].length() + epsilon) &&			// is P within a rectangle spanned by |P1| and |P2|?
+		   projectP1 > 0.0f &&
+		   projectP2 > 0.0f) {											// is P in the "direction" of P1 and P2
+			counter++;
+		}
+		l++;
+	}
+	// case of intersection (note that the box is convex)
+	// for convenience set P[0] to be the lower end (lower z) of the body and P[1] to be the upper end (P[0]<P[1] always)
+	if(fabs(P[0][2]-P[1][2]) < 0.0001) counter = 0;	// neglect edges
+	if(counter == 2){
+		bubbleSortVert(2, P, 2);
+		float t0 = P[0][2];
+		float t1 = P[1][2];
+		r = P[0];
+		assert(t0<t1);							// just double checking bubblesort
+		float h = height[INDEX(i, j)];
+		isIntersecting = true;					// remember where the intersection starts
+		if(t1 < h) displ = t1 - t0;				// body under water
+		else if(t0 > h){
+			 displ = 0.0f;						// body above water (NO intersection water-body)
+			 isIntersecting = false;
+		}
+		else displ = h - t0;					// only h-t0 is under water
+	}
+	// case of no intersection or intersecting close to the edges of the box
+	else if(counter == 0 || counter == 1){
+		displ = 0.0f;
+		isIntersecting = false;
+	}
+	// something weird happened!
+	else
+		cout << "weird behaviour" << endl;
+
+	return isIntersecting;
+}
+
+std::vector<float>* SWRBSolver::getDisplacement(){
+	return &this->displ_new;
+}
+
+void SWRBSolver::bubbleSortVert(int coord, Vector3f *A, int n){
+	bool swapped;
+	do{
+		swapped = false;
+		for(int i=0; i<n-1; i++){
+			if(A[i][coord] > A[i+1][coord]){
+				Vector3f tmp = A[i];
+				A[i] = A[i+1];
+				A[i+1] = tmp;
+				swapped = true;
+			}
+		}
+		n--;
+	} 
+	while(swapped == true);
+}
+
+bool isLeft(Vector3f a, Vector3f b, Vector3f c){
+    return ((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])) > 0;
+}
+
+std::vector<Vector3f> SWRBSolver::getConvexHull8XY(Vector3f* vertices){
+	bubbleSortVert(1, vertices, 8);
+	if(vertices[0][0] == vertices[1][0]){
+		bubbleSortVert(0, vertices, 8);
+	}
+	Vector3f pointOnHull = vertices[0];
+	Vector3f endpoint;
+	std::vector<Vector3f> P;
+	int i=0;
+	do{
+		P.push_back(pointOnHull);
+		endpoint = vertices[0];
+		for(int j=0; j<8; j++){
+			if((endpoint == pointOnHull) || isLeft(P[i], endpoint, vertices[j]))
+				endpoint = vertices[j];
+		}
+		i++;
+		pointOnHull = endpoint;
+	} while(endpoint != P[0]);
+
+	return P;
 }

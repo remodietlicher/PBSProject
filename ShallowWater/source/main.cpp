@@ -43,12 +43,14 @@ const glm::vec2 SCREEN_SIZE(800, 600);
 // globals for GPU
 tdogl::Program* gProgram = NULL;
 tdogl::Camera gCamera;
-GLuint gVAO = 0;
+GLuint gVAO      = 0;
 GLuint gVertexXY = 0; // Vertex positions
 GLuint gVertexZ  = 0; // The water
 GLuint gVertexG  = 0; // The ground
 GLuint gNormal   = 0; // the normal of the water
 GLuint gIndex    = 0; // the triangle mesh indices
+// GLuint gBox      = 0;
+// GLuint gBoxIndex = 0;
 
 // globals for CPU
 GLfloat *vertexXY; // vertex positons in CPU RAM
@@ -163,35 +165,6 @@ static void MakeTriangleMesh(Sw_grid *grid){
     delete indexData;
 }
 
-// static void LoadCube() {
-
-//     // make and bind the VAO
-//     glGenVertexArrays(1, &gVAO);
-//     glBindVertexArray(gVAO);
-    
-
-
-//     // Computing Normals
-//     GLfloat *normalData = new GLfloat[nVertsTot*3];
-//     computeNormals(vertexXY, vertexZ, normalData, grid);
-    
-//     glGenBuffers(1, &gVertexZ);
-//     glBindBuffer(GL_ARRAY_BUFFER, gVertexZ);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*nVertsTot, vertexZ, GL_STATIC_DRAW);
-
-//     glGenBuffers(1, &gVertexG);
-//     glBindBuffer(GL_ARRAY_BUFFER, gVertexG);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*nVertsTot, vertexG, GL_STATIC_DRAW);
-    
-//     glGenBuffers(1, &gNormal);
-//     glBindBuffer(GL_ARRAY_BUFFER, gNormal);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*nVertsTot*3, normalData, GL_STATIC_DRAW);
-    
-//     // unbind the VAO
-//     glBindVertexArray(0); //CANNOT DO: Open Gl reports 'invalid operation'
-
-// }
-
 // loads a cube into the VAO and VBO globals: gVAO and gVBO
 static void LoadHeigthGPU(Sw_grid *grid) {
 
@@ -230,6 +203,59 @@ static void LoadHeigthGPU(Sw_grid *grid) {
 
 }
 
+// static void LoadBoxGPU(Box *box) {
+
+//     int nTriangles = 12;
+//     int nBoxIndices = 12*3;
+
+//     GLfloat* boxverts[8];
+//     for(int i=0; i<2; i++)
+//         for(int j=0; j<2; j++)
+//             for(int l=0; l<2; l++){
+//                 boxverts[i + j*2 + l*4] = box->x + (box->x0*pow(-1, i)+box->y0*pow(-1, j)+box->z0*pow(-1, l))*0.5f;
+//             }
+
+//     // int indexData[12];
+//     // for (int i = 0; i < 2; ++i)
+//     // for (int j = 0; j < 2; ++j)
+//     // for (int k = 0; k < 2; ++k)
+//     // {
+//     //     int index = i + j*2 + l*4;
+//     //     indexData[index*3 + 0] = i + j*2 + l*4;
+//     //     indexData[index*3 + 1] = i+1 + j*2 + l*4;
+//     // }
+
+//     int indexData[12] = {
+//         0,1,2,
+//         1,3,2,
+//         5,1,3,
+//         5,3,7,
+//         4,5,7,
+//         4,7,6,
+//         6,7,3,
+//         6,3,2,
+//         4,0,2,
+//         4,2,6,
+//         4,5,1,
+//         4,1,0
+//     }
+
+//     // make and bind the VAO
+//     glGenVertexArrays(1, &gVAO);
+//     glBindVertexArray(gVAO);
+
+//     glGenBuffers(1, &gBox);
+//     glBindBuffer(GL_ARRAY_BUFFER, gBox);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*8, vertexG, GL_STATIC_DRAW);
+
+//     glGenBuffers(1, &gBoxIndex);
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gBoxIndex);
+//     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*nBoxIndices, indexData, GL_STATIC_DRAW);
+    
+//     // unbind the VAO
+//     glBindVertexArray(0); //CANNOT DO: Open Gl reports 'invalid operation'
+
+// }
 
 // draws a single frame
 static void Render(Sw_grid *grid) {
@@ -429,10 +455,10 @@ void initialConditions(Sw_grid *grid){
     for (int i = 0; i < xRes; ++i)
     for (int j = 0; j < yRes; ++j){
         int index = i + j*xRes;
-        if (i > xRes/4 && i < xRes*3/4 && j > yRes/4 && j < yRes*3/4)
-            eta[index] = 0.1;
-        else
-            eta[index] = 0.0;
+        // if (i > xRes/4 && i < xRes*3/4 && j > yRes/4 && j < yRes*3/4)
+        //     eta[index] = 0.1;
+        // else
+        eta[index] = 0.5;
         ground[index] = 0.0;
         height[index] = ground[index] + eta[index];
         velx[index] = 0.0;
@@ -581,10 +607,12 @@ void AppMain() {
 
     // initialConditionBeach(grid);
     initialConditions(grid);
-    
+    Box *box = new Box(Vector3f(0.5f, 0.5f, 0.5f), 0.1, Vector3f(0.2f, 0.0f, 0.0f),  Vector3f(0.0f, 0.2f, 0.0f),  Vector3f(0.0f, 0.0f, 0.2f));
+
     // initiate solver and bind grid
-    SWSolver solver;
-    solver.setGrid(grid);
+    SWSolver sw_solver;
+    sw_solver.setGrid(grid);
+    SWRBSolver swrb_solver(grid, box);
 
     // initialize GLFW & GLEW
     initGLFW();
@@ -601,7 +629,8 @@ void AppMain() {
     MakeTriangleMesh(grid);
     
     FPSMeasure fps;
-    double sim_time = 0.0;
+    float sim_time = 0.0;
+    float phys_time = 0.0;
     bool bSolving   = false;
     bool bRain      = false;
     bool bTsunami   = false;
@@ -642,7 +671,24 @@ void AppMain() {
         }
         if(bSolving){
             sim_time += dt;
-            solver.advanceTimestep(sim_time);
+
+            float *eta = grid->oldFields[ETA];
+            int xRes = grid->xRes;
+            int yRes = grid->yRes;
+            float H = 0.;
+            for (int i = 0; i < xRes - 1; i++)
+            for (int j = 0; j < yRes - 1; j++)
+                H += eta[i+j*xRes];
+            H /= (float)(xRes*yRes);
+            float maxdt = 0.01;//0.1*grid->dx / sqrt(sw_solver.g*H);
+            
+            while(phys_time < sim_time){
+                
+                float dtPhys = std::min(maxdt, sim_time - phys_time);
+                sw_solver.advanceTimestep(dtPhys);
+                swrb_solver.advanceTimestep(dtPhys);
+                phys_time += dtPhys;
+            }
         }
         lastTime = thisTime;
 
