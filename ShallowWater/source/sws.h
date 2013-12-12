@@ -41,8 +41,9 @@ private:
 	Box *box;
 	RigidBodySolver rbs;
 	std::vector<float> displ_old, displ_new;
+    Sw_grid *grid;
 	float alpha, rho, g;
-	Sw_grid *grid;
+
 
 public:
 	SWRBSolver(Sw_grid *_grid, Box *_box);

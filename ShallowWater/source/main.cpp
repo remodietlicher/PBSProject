@@ -59,8 +59,8 @@ GLfloat *vertexXY; // vertex positons in CPU RAM
 // loads the vertex shader and fragment shader, and links them to make the global gProgram
 static void LoadShaders() {
     std::vector<tdogl::Shader> shaders;
-    shaders.push_back(tdogl::Shader::shaderFromFile("resources/vertex-shader.txt", GL_VERTEX_SHADER));
-    shaders.push_back(tdogl::Shader::shaderFromFile("resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
+    shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
+    shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
     gProgram = new tdogl::Program(shaders);
 }
 
@@ -206,7 +206,7 @@ static void LoadHeigthGPU(Sw_grid *grid) {
 
 static void LoadBoxGPU(Box *box) {
 
-    int nTriangles = 12;
+//    int nTriangles = 12;
     int nBoxIndices = 12*3;
 
     // make and bind the VAO
@@ -218,7 +218,7 @@ static void LoadBoxGPU(Box *box) {
     for(int i=0; i<2; i++)
         for(int j=0; j<2; j++)
             for(int l=0; l<2; l++){
-                Vector3f pos = box->x + (box->x0*pow(-1, i)+box->y0*pow(-1, j)+box->z0*pow(-1, l))*0.5f;
+                Vector3f pos = box->x + (box->x0*pow(-1.f, i)+box->y0*pow(-1.f, j)+box->z0*pow(-1.f, l))*0.5f;
                 boxvertsXY[(i + j*2 + l*4)*2 + 0] = pos.x();
                 boxvertsXY[(i + j*2 + l*4)*2 + 1] = pos.y();
                 boxvertsZ[  i + j*2 + l*4    + 0] = pos.z();
@@ -501,7 +501,7 @@ void initialConditions(Sw_grid *grid){
         // if (i > xRes/4 && i < xRes*3/4 && j > yRes/4 && j < yRes*3/4)
         //     eta[index] = 0.1;
         // else
-        eta[index] = 0.5;
+        eta[index] = 0.1;
         ground[index] = 0.0;
         height[index] = ground[index] + eta[index];
         velx[index] = 0.0;
@@ -551,7 +551,7 @@ void rain(Sw_grid *grid){
     int ii = rand() % grid->xRes;
     int jj = rand() % grid->yRes;
     float *eta = grid->oldFields[ETA];
-    float *height = grid->oldFields[HEIGHT];
+//    float *height = grid->oldFields[HEIGHT];
     float drop = 0.05;
     for (int i = -1; i < 2; ++i)
     for (int j = -2; j < 2; ++j) {
@@ -563,7 +563,7 @@ void rain(Sw_grid *grid){
 void tsunami(Sw_grid *grid){
     float *eta = grid->oldFields[ETA];
     float *height = grid->oldFields[HEIGHT];
-    float *vely = grid->oldFields[VELY];
+//    float *vely = grid->oldFields[VELY];
     for (int i = 0; i < grid->xRes; ++i)
     for (int j = 0; j < grid->yRes/10; ++j){
         // vely[   i + j*grid->xRes] += 0.01;
@@ -591,7 +591,7 @@ void beachRise2(Sw_grid *grid){
 
 void blob(Sw_grid *grid){
     float *eta = grid->oldFields[ETA];
-    float *height = grid->oldFields[GROUND];
+//    float *height = grid->oldFields[GROUND];
     int xRes = grid->xRes;
     int yRes = grid->yRes;
     for (int i = 0; i < xRes; ++i)
@@ -729,7 +729,7 @@ void AppMain() {
                 
                 float dtPhys = std::min(maxdt, sim_time - phys_time);
                 sw_solver.advanceTimestep(dtPhys);
-                swrb_solver.advanceTimestep(dtPhys);
+                // swrb_solver.advanceTimestep(dtPhys);
                 phys_time += dtPhys;
             }
         }

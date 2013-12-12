@@ -7,7 +7,7 @@ Sw_grid.h:
     xRes : resolution in x direction
     yRes : resolution in y direction
     dx   : size of quadratic cell in x and y direction
-/************************************************************/
+************************************************************/
 
 #ifndef _SWGRID_
     #define _SWGRID_
@@ -31,6 +31,6 @@ private:
     float *eta, *ground, *height, *velx, *vely;
     float *eta_new, *ground_new, *height_new, *velx_new, *vely_new;
     float *normal;
-    int nFields;
+//    int nFields;
 };
 #endif

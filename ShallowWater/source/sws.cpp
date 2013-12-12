@@ -199,11 +199,12 @@ float SWSolver::computePotentialEnergy(){
 
 SWRBSolver::SWRBSolver(Sw_grid *_grid, Box *b) : 
 	box(b),
-	grid(_grid),
+	rbs(b),
+    grid(_grid),
 	alpha(1.0f),
 	rho(100.0f),
-	g(9.81f),
-	rbs(b)
+	g(9.81f)
+
 {
 	int xRes = grid->xRes;
 	int yRes = grid->yRes;
@@ -283,7 +284,7 @@ void SWRBSolver::estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, i
 		grid->xRes,
 		grid->yRes
 	};
-	float *height = grid->oldFields[HEIGHT];
+//	float *height = grid->oldFields[HEIGHT];
 //	std::vector<Vector3f> convHull;
 
 	// for more accurate estimate of indices
@@ -393,8 +394,10 @@ bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
 		isIntersecting = false;
 	}
 	// something weird happened!
-	else
+	else {
 		cout << "weird behaviour" << endl;
+        isIntersecting = false;
+    }
 
 	return isIntersecting;
 }

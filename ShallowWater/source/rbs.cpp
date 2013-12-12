@@ -22,7 +22,7 @@ void RigidBodySolver::sumExternalForces(std::vector<Vector3f> F,std::vector<Vect
 	F.push_back(Vector3f(0.0f, 0.0f, -9.81f));
 	r.push_back(body->x);
 */
-	int N = F.size();
+	int N = (int)F.size();
 	for(int i=0; i<N; i++){
 		body->force += F[i];
 		body->torque += (r[i] - body->x).cross(F[i]);
