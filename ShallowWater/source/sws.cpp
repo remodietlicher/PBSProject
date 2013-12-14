@@ -239,15 +239,18 @@ void SWRBSolver::advanceTimestep(float dt){
 	Vector3f r;
 	// set the displacements
 	int index = 0;
+	float totalDisplacement = 0.0f;
 	for(int i=x_min; i<x_max; i++)
 		for(int j=y_min; j<y_max; j++){
 			isIntersecting[index] = calculateDisplacement(i, j, displ_new[INDEX(i, j)], r);
+			totalDisplacement += displ_new[INDEX(i, j)];
 			if(isIntersecting[index])
 				positions.push_back(r);
 			index++;
 		}
 
-	cout << "handling body interaction..." << endl;
+//	cout << "handling body interaction..." << endl;
+	cout << totalDisplacement << endl;
 	std::vector<Vector3f> forces;
 	index = 0;
 	for(int i=x_min; i<x_max; i++)
@@ -255,7 +258,7 @@ void SWRBSolver::advanceTimestep(float dt){
 			// handle body --> water
 			// set height of neighbouring cells
 			float dh = (displ_new[INDEX(i, j)]-displ_old[INDEX(i, j)]);
-			height[INDEX(i, j)] -= dh;
+			//height[INDEX(i, j)] -= dh*alpha;
 			height[INDEX(i+1, j)] += dh*0.25*alpha;
 			height[INDEX(i, j+1)] += dh*0.25*alpha;
 			height[INDEX(i-1, j)] += dh*0.25*alpha;
@@ -271,10 +274,18 @@ void SWRBSolver::advanceTimestep(float dt){
 		}
 
 	// add gravity
-	forces.push_back(Vector3f(0.0f, 0.0f, -9.81f));
+	forces.push_back(Vector3f(0.0f, 0.0f, -1.0f));
 	positions.push_back(box->x);
 
+/*
+	// some funny rotation
+	forces.push_back(Vector3f(0.0f, 0.0f, 0.0001f));
+	positions.push_back(box->x-box->x0/2.0f-box->y0/2.0f-box->z0/2.0f);
+*/
+
 	rbs.advanceTimestep(dt, forces, positions);
+	forces.clear();
+	positions.clear();
 
 	displ_old = displ_new; // note that the vector class has an overloaded "=" which copies the content
 }

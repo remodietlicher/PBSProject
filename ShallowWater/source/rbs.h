@@ -15,6 +15,7 @@ private:
 	Matrix3x3f star(Vector3f v);
 	void sumExternalForces(std::vector<Vector3f> F, std::vector<Vector3f> r);
 	void performEulerIntegration(float dt);
+	void performImplicitEulerIntegration(float dt);
 	void setBodyBox();
 };
 
