@@ -1,9 +1,8 @@
 #version 150
 
-uniform float type;
-
 in vec3 normalf;
 in vec3 vertf;
+in float typef;
 
 out vec4 finalColor;
 
@@ -15,14 +14,17 @@ void main() {
     vec3 normal = normalize(normalf);
     float diffuse = dot(normal, surfaceToLight);
     diffuse = clamp(diffuse, 0., 0.9);
-	vec3 diffusecolor;
+	vec3 diffusecolor = vec3(0.0, 0.0, 0.0);
     
-	if(type == 1.0) {
+	if(typef == 1.0) {
 		diffusecolor= vec3(0.2, 0.4, 1.0);
 	}
 	else {
 		diffusecolor= vec3(1.0, 0.0, 0.0);
 	}
+
+	//above does not work..
+	diffusecolor= vec3(0.2, 0.4, 1.0);
 
 	vec3 color = diffuse * diffusecolor + ambient;
 	finalColor = vec4(color, 1.0);
