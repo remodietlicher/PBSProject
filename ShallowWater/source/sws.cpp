@@ -307,11 +307,11 @@ void SWRBSolver::estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, i
 	// calculate bounding box on grid for a rough estimate of grid points
 	// get points with x_max and x_min
 	bubbleSortVert(0, vertices, 8);
-	x_min = int(vertices[0][0]*res[0]);		// always round down for minimal index
-	x_max = int(vertices[7][0]*res[0]+1);	// always round up for maximal index
+	x_min = int(vertices[0][0]/grid->dx);		// always round down for minimal index
+	x_max = int(vertices[7][0]/grid->dx+1);	// always round up for maximal index
 	bubbleSortVert(1, vertices, 8);
-	y_min = int(vertices[0][1]*res[1]);
-	y_max = int(vertices[7][1]*res[1]+1);
+	y_min = int(vertices[0][1]/grid->dx);
+	y_max = int(vertices[7][1]/grid->dx+1);
 
 	// clamp range of access to boundary values
 	if(x_min<0) x_min = 1;
@@ -330,13 +330,11 @@ bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
 		grid->yRes
 	};
 	float *height = grid->oldFields[HEIGHT];
-	Vector3f P_line(float(i)/res[0], float(j)/res[0], 0.0f);
+	Vector3f P_line(float(i)*grid->dx, float(j)*grid->dx, 0.0f);
 	Vector3f V(0.0f, 0.0f, 1.0f);
 
 	Vector3f vertex_bl(box->x - (box->x0 + box->y0 + box->z0)*0.5f);
 	Vector3f vertex_tr(box->x + (box->x0 + box->y0 + box->z0)*0.5f);
-
-	//cout << box->x0.length() + box->y0.length() + box->z0.length() << " " << box->R.det() << endl;
 
 	// define planes to make things easier
 	Vector3f planeVector1[6];

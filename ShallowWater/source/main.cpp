@@ -27,6 +27,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <algorithm>
 
 // tdogl classes
 #include "tdogl/Program.h"
@@ -653,8 +654,8 @@ void initGLFW(){
 
 // the program starts here
 void AppMain() {
-    float size = 20;
-    Sw_grid *grid = new Sw_grid(size, size, 1.0/size);
+    float size = 70;
+    Sw_grid *grid = new Sw_grid(size, 2*size, 1.0/size);
 
     // initialConditionBeach(grid);
     initialConditions(grid);
@@ -749,7 +750,7 @@ void AppMain() {
             //while(phys_time < sim_time){
                 
                 float dtPhys = std::min(maxdt, sim_time - phys_time);
-//                sw_solver.advanceTimestep(dtPhys);
+                //sw_solver.advanceTimestep(dtPhys);
                 swrb_solver.advanceTimestep(dtPhys);
                 phys_time += dtPhys;
             //}
