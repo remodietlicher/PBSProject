@@ -27,6 +27,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <algorithm>
 
 // tdogl classes
 #include "tdogl/Program.h"
@@ -441,20 +442,23 @@ void Update(float secondsElapsed, bool &bSolving, bool &bRain, bool &bTsunami, b
         bBeachRise = true;
     }
 
-    //rotate camera based on mouse movement
-    const float mouseSensitivity = 0.1;
-    int mouseX, mouseY;
-    glfwGetMousePos(&mouseX, &mouseY);
-    gCamera.offsetOrientation(mouseSensitivity * mouseY, mouseSensitivity * mouseX);
-    glfwSetMousePos(0, 0); //reset the mouse, so it doesn't go out of the window
+#if 0
+	//rotate camera based on mouse movement
+	const float mouseSensitivity = 0.1;
+	int mouseX, mouseY;
+	glfwGetMousePos(&mouseX, &mouseY);
+	gCamera.offsetOrientation(mouseSensitivity * mouseY, mouseSensitivity * mouseX);
+	glfwSetMousePos(0, 0); //reset the mouse, so it doesn't go out of the window
 
-    //increase or decrease field of view based on mouse wheel
-    const float zoomSensitivity = -0.2;
-    float fieldOfView = gCamera.fieldOfView() + zoomSensitivity * (float)glfwGetMouseWheel();
-    if(fieldOfView < 5.0f) fieldOfView = 5.0f;
-    if(fieldOfView > 130.0f) fieldOfView = 130.0f;
-    gCamera.setFieldOfView(fieldOfView);
-    glfwSetMouseWheel(0);
+	//increase or decrease field of view based on mouse wheel
+	const float zoomSensitivity = -10.0;
+	float fieldOfView = gCamera.fieldOfView() + zoomSensitivity * (float)glfwGetMouseWheel();
+	if (fieldOfView < 5.0f) fieldOfView = 5.0f;
+	if (fieldOfView > 130.0f) fieldOfView = 130.0f;
+	gCamera.setFieldOfView(fieldOfView);
+	glfwSetMouseWheel(0);
+#endif // 0
+
 }
 
 class FPSMeasure {
@@ -615,9 +619,9 @@ void initGLFW(){
         throw std::runtime_error("glfwOpenWindow failed. Can your hardware handle OpenGL 3.2?");
 
     // GLFW settings
-    glfwDisable(GLFW_MOUSE_CURSOR);
-    glfwSetMousePos(0, 0);
-    glfwSetMouseWheel(0);
+    //glfwDisable(GLFW_MOUSE_CURSOR);
+    //glfwSetMousePos(0, 0);
+    //glfwSetMouseWheel(0);
 
     // initialise GLEW
     glewExperimental = GL_TRUE; //stops glew crashing on OSX :-/
@@ -665,6 +669,7 @@ void AppMain() {
 
     // setup gCamera
     gCamera.setPosition(glm::vec3(2,2,2));
+	gCamera.setFieldOfView(100.0);
     gCamera.setViewportAspectRatio(SCREEN_SIZE.x / SCREEN_SIZE.y);
     gCamera.lookAt(glm::vec3(0,0,0));
     
@@ -674,9 +679,9 @@ void AppMain() {
     FPSMeasure fps;
     float sim_time = 0.0;
     float phys_time = 0.0;
-    bool bSolving   = false;
+    bool bSolving   = true;
     bool bRain      = false;
-    bool bTsunami   = false;
+    bool bTsunami   = true;
     bool bBlob      = false;
     bool bBeachRise = false;
 
@@ -686,7 +691,7 @@ void AppMain() {
 
         // update the scene based on the time elapsed since last update
         double thisTime = glfwGetTime();
-        float dt = thisTime - lastTime;
+		float dt = 0.0001f;// thisTime - lastTime;
         Update(dt, bSolving, bRain, bTsunami, bBlob, bBeachRise);
         
         // if((int)(thisTime*10)%2 == 0){
@@ -725,13 +730,13 @@ void AppMain() {
             H /= (float)(xRes*yRes);
             float maxdt = 0.01;//0.1*grid->dx / sqrt(sw_solver.g*H);
             
-            while(phys_time < sim_time){
+           // while(phys_time < sim_time){
                 
-                float dtPhys = std::min(maxdt, sim_time - phys_time);
+				float dtPhys = 0.0001f;// std::min(maxdt, sim_time - phys_time);
                 sw_solver.advanceTimestep(dtPhys);
                 swrb_solver.advanceTimestep(dtPhys);
                 phys_time += dtPhys;
-            }
+            //}
         }
         lastTime = thisTime;
 
@@ -744,8 +749,10 @@ void AppMain() {
 
         // check for errors
         GLenum error = glGetError();
-        if(error != GL_NO_ERROR)
-            std::cerr << "OpenGL Error " << error << ": " << (const char*)gluErrorString(error) << std::endl;
+		if (error != GL_NO_ERROR) {
+			//std::cerr << "OpenGL Error " << error << ": " << (const char*)gluErrorString(error) << std::endl;
+			std::cerr << "OpenGL Error " << error << ": " << error << std::endl;
+		}
 
         // measure frames per second
         fps.measure_fps();
