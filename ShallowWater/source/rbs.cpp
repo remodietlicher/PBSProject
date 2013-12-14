@@ -15,7 +15,7 @@ void RigidBodySolver::advanceTimestep(float dt, std::vector<Vector3f> F, std::ve
 	setBodyBox();
 }
 
-void RigidBodySolver::sumExternalForces(std::vector<Vector3f> F,std::vector<Vector3f> r){
+void RigidBodySolver::sumExternalForces(std::vector<Vector3f> F, std::vector<Vector3f> r){
 	body->force = Vector3f(0.0f, 0.0f, 0.0f);
 	body->torque = Vector3f(0.0f, 0.0f, 0.0f);
 /*	// add gravity
@@ -30,6 +30,15 @@ void RigidBodySolver::sumExternalForces(std::vector<Vector3f> F,std::vector<Vect
 }
 
 void RigidBodySolver::performEulerIntegration(float dt){
+	body->v += 1/body->mass*dt*body->force;
+	body->x += dt*body->v;
+	body->R += dt*star(body->omega)*body->R;
+	body->Iinv = body->R*body->Ibodyinv*body->R.transposed();
+	body->L += dt*body->torque;
+	body->omega = body->Iinv*body->L;
+}
+
+void RigidBodySolver::performImplicitEulerIntegration(float dt){
 	body->v += 1/body->mass*dt*body->force;
 	body->x += dt*body->v;
 	body->R += dt*star(body->omega)*body->R;
