@@ -60,8 +60,10 @@ GLfloat *vertexXY; // vertex positons in CPU RAM
 // loads the vertex shader and fragment shader, and links them to make the global gProgram
 static void LoadShaders() {
     std::vector<tdogl::Shader> shaders;
-    shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
-    shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
+	//shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\vertex-shader.txt", GL_VERTEX_SHADER));
+    //shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\fragment-shader.txt", GL_FRAGMENT_SHADER));
     gProgram = new tdogl::Program(shaders);
 }
 
@@ -285,6 +287,10 @@ static void Render(Sw_grid *grid) {
 
     // set the "camera" uniform
     gProgram->setUniform("camera", gCamera.matrix());
+
+	// set type water
+	gProgram->setUniform("type", 1.0f);
+
     
     // VERTEX XY
     glEnableVertexAttribArray(gProgram->attrib("vertXY"));
@@ -362,6 +368,9 @@ static void Render(Sw_grid *grid) {
     glDisableVertexAttribArray(gProgram->attrib("vertXY"));
 
     /////////////////// BOX //////////////
+	// set type box
+	gProgram->setUniform("type", 0.0f);
+
     glEnableVertexAttribArray(gProgram->attrib("vertXY"));
     glBindBuffer(GL_ARRAY_BUFFER, gBoxVertXY);
     glVertexAttribPointer(
