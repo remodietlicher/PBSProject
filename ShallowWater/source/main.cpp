@@ -27,6 +27,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <algorithm>
 
 // tdogl classes
 #include "tdogl/Program.h"
