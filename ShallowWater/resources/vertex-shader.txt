@@ -5,16 +5,13 @@ uniform mat4 camera;
 in vec2 vertXY;
 in float vertZ;
 in vec3 normal;
-in float type;
 
 out vec3 normalf;
 out vec3 vertf;
-out float typef;
 
 void main() {
     vec3 vert = vec3(vertXY.x, vertZ, vertXY.y);
     gl_Position = camera * vec4(vert, 1.0);
     normalf = normal;
     vertf = vert;
-	typef = type;
 }

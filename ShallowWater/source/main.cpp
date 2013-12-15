@@ -53,11 +53,6 @@ GLuint gIndex    = 0; // the triangle mesh indices
 GLuint gBoxVertXY= 0;
 GLuint gBoxVertZ = 0;
 GLuint gBoxIndex = 0;
-GLuint gVertTypeBox = 0;
-GLuint gVertTypeWater = 0;
-
-GLfloat typeWater = 1.0f;
-GLfloat typeBox   = 2.0f;
 
 // globals for CPU
 GLfloat *vertexXY; // vertex positons in CPU RAM
@@ -65,10 +60,10 @@ GLfloat *vertexXY; // vertex positons in CPU RAM
 // loads the vertex shader and fragment shader, and links them to make the global gProgram
 static void LoadShaders() {
     std::vector<tdogl::Shader> shaders;
-	//shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
-	//shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
-	shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\vertex-shader.txt", GL_VERTEX_SHADER));
-    shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\fragment-shader.txt", GL_FRAGMENT_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("resources/vertex-shader.txt", GL_VERTEX_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
+	// shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\vertex-shader.txt", GL_VERTEX_SHADER));
+ //    shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\fragment-shader.txt", GL_FRAGMENT_SHADER));
     gProgram = new tdogl::Program(shaders);
 }
 
@@ -78,7 +73,6 @@ void computeNormals(GLfloat *vertexXY, GLfloat *vertexZ, GLfloat *normalData, Sw
         computes the normals for vertexXY & vertexZ
         saves into normalData
     */
-
 
     int nCellsX = grid->xRes-1;
     int nCellsY = grid->yRes-1;
@@ -206,11 +200,6 @@ static void LoadHeigthGPU(Sw_grid *grid) {
     glGenBuffers(1, &gNormal);
     glBindBuffer(GL_ARRAY_BUFFER, gNormal);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*nVertsTot*3, normalData, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &gVertTypeWater);
-	glBindBuffer(GL_ARRAY_BUFFER, gVertTypeWater);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)* 1, &typeWater, GL_STATIC_DRAW);
-
     
     // unbind the VAO
     glBindVertexArray(0); //CANNOT DO: Open Gl reports 'invalid operation'
@@ -270,15 +259,11 @@ static void LoadBoxGPU(Box *box) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gBoxIndex);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*nBoxIndices, indexData, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &gVertTypeBox);
-	glBindBuffer(GL_ARRAY_BUFFER, gVertTypeBox);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)* 1, &typeBox, GL_STATIC_DRAW);
-
-
     // unbind the VAO
     glBindVertexArray(0); //CANNOT DO: Open Gl reports 'invalid operation'
 
-    // delete boxvertsXY, boxvertsZ;
+    delete boxvertsXY;
+    delete boxvertsZ;
 
 }
 
@@ -302,6 +287,15 @@ static void Render(Sw_grid *grid) {
 
     // set the "camera" uniform
     gProgram->setUniform("camera", gCamera.matrix());
+
+    /************* 
+    WATER 
+    **************/
+    // COLOR
+    glm::vec3 water_color_dif(0.1,0.3,0.7);
+    gProgram->setUniform("color_dif", water_color_dif);
+    glm::vec3 water_color_amb(0.0,0.1,0.05);
+    gProgram->setUniform("color_amb", water_color_amb);
 
     // VERTEX XY
     glEnableVertexAttribArray(gProgram->attrib("vertXY"));
@@ -352,6 +346,15 @@ static void Render(Sw_grid *grid) {
     glDisableVertexAttribArray(gProgram->attrib("vertZ"));
     glDisableVertexAttribArray(gProgram->attrib("normal"));
 
+    /****************
+        GROUND
+     ****************/
+    // COLOR
+    glm::vec3 ground_color_dif(0.0,0.0,0.0);
+    gProgram->setUniform("color_dif", ground_color_dif);
+    glm::vec3 ground_color_amb(0.2,0.2,0.2);
+    gProgram->setUniform("color_amb", ground_color_amb);
+
     // VERTEX G = HEIGHT
     glEnableVertexAttribArray(gProgram->attrib("vertZ"));
     glBindBuffer(GL_ARRAY_BUFFER, gVertexG);
@@ -367,18 +370,6 @@ static void Render(Sw_grid *grid) {
     // INDEX
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndex);
 
-	// TYPE
-	glEnableVertexAttribArray(gProgram->attrib("type"));
-	glBindBuffer(GL_ARRAY_BUFFER, gVertTypeWater);
-	glVertexAttribPointer(
-		gProgram->attrib("type"),                  // attribute
-		1,                  // size = size of vector to pass to vertex shader
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
-		);
-    
     glDrawElements(
                    GL_TRIANGLES,      // mode
                    nIndices,          // count = number of indices
@@ -388,10 +379,16 @@ static void Render(Sw_grid *grid) {
     
     
     glDisableVertexAttribArray(gProgram->attrib("vertZ"));
-	glDisableVertexAttribArray(gProgram->attrib("vertXY"));
-	glDisableVertexAttribArray(gProgram->attrib("type"));
+	  glDisableVertexAttribArray(gProgram->attrib("vertXY"));
 
-    /////////////////// BOX //////////////
+    /****************
+      BOX
+    *****************/
+
+    // COLOR
+    glm::vec3 box_color_amb(0.5,0.2,0.2);
+    gProgram->setUniform("color_amb", box_color_amb);
+
     glEnableVertexAttribArray(gProgram->attrib("vertXY"));
     glBindBuffer(GL_ARRAY_BUFFER, gBoxVertXY);
     glVertexAttribPointer(
@@ -415,18 +412,6 @@ static void Render(Sw_grid *grid) {
                           );
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gBoxIndex);
-
-	// TYPE
-	glEnableVertexAttribArray(gProgram->attrib("type"));
-	glBindBuffer(GL_ARRAY_BUFFER, gVertTypeBox);
-	glVertexAttribPointer(
-		gProgram->attrib("type"),                  // attribute
-		1,                  // size = size of vector to pass to vertex shader
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
-		);
     
     glDrawElements(
                    GL_TRIANGLES,      // mode
@@ -436,9 +421,8 @@ static void Render(Sw_grid *grid) {
                    );
 
     glDisableVertexAttribArray(gProgram->attrib("vertZ"));
-	glDisableVertexAttribArray(gProgram->attrib("vertXY"));
-	glDisableVertexAttribArray(gProgram->attrib("type"));
-
+	  glDisableVertexAttribArray(gProgram->attrib("vertXY"));
+	
     // unbind the VAO, the program
     glBindVertexArray(0);
     gProgram->stopUsing();
@@ -689,12 +673,8 @@ void initGLFW(){
 
 // the program starts here
 void AppMain() {
-    float size = 70;
-<<<<<<< HEAD
-    Sw_grid *grid = new Sw_grid(size, 2*size, 1.0/size);
-=======
-    Sw_grid *grid = new Sw_grid(size, 2*size, 2.0/size);
->>>>>>> 37729c96392ab492b3a8f5fe7056813aa530f571
+    float size = 50;
+    Sw_grid *grid = new Sw_grid(size, 2*size, 4.0/size);
 
     // initialConditionBeach(grid);
     initialConditions(grid);
@@ -771,18 +751,13 @@ void AppMain() {
             for (int j = 0; j < yRes - 1; j++)
                 H += eta[i+j*xRes];
             H /= (float)(xRes*yRes);
-            float maxdt = 0.01f;//0.1*grid->dx / sqrt(sw_solver.g*H);
+            float maxdt = 0.1f*grid->dx / sqrt(sw_solver.g*H);
             
             while(phys_time < sim_time){
                 
                 float dtPhys = std::min(maxdt, sim_time - phys_time);
-<<<<<<< HEAD
-                //sw_solver.advanceTimestep(dtPhys);
-                swrb_solver.advanceTimestep(dtPhys);
-=======
-                sw_solver.advanceTimestep(dtPhys);
+                sw_solver.advanceTimestep(dt);
                 // swrb_solver.advanceTimestep(dtPhys);
->>>>>>> 37729c96392ab492b3a8f5fe7056813aa530f571
                 phys_time += dtPhys;
             }
         }
