@@ -433,7 +433,8 @@ static void Render(Sw_grid *grid) {
 
 
 // update the scene based on the time elapsed since last update
-void Update(float secondsElapsed, bool &bSolving, bool &bRain, bool &bTsunami, bool &bBlob, bool &bBeachRise) {
+void Update(float secondsElapsed, bool &bSolving, bool &bRain, bool &bTsunami, bool &bBlob, bool &bBeachRise, bool &bMoveUp, bool &bMoveDown, bool &bMoveNorth, bool &bMoveEast,
+			bool &bMoveSouth, bool &bMoveWest) {
 
     //move position of camera based on WASD keys, and XZ keys for up and down
     const float moveSpeed = 2.0; //units per second
@@ -467,6 +468,24 @@ void Update(float secondsElapsed, bool &bSolving, bool &bRain, bool &bTsunami, b
     }
     if(glfwGetKey('B')){
         bBeachRise = true;
+    }    
+	if(glfwGetKey('U')){
+        bMoveUp = true;
+    }
+    if(glfwGetKey('H')){
+        bMoveDown = true;
+    }
+    if(glfwGetKey('I')){
+        bMoveSouth = true;
+    }
+    if(glfwGetKey('L')){
+        bMoveEast = true;
+    }
+    if(glfwGetKey('M')){
+        bMoveNorth = true;
+    }
+    if(glfwGetKey('J')){
+        bMoveWest = true;
     }
 
     //rotate camera based on mouse movement
@@ -529,7 +548,7 @@ void initialConditions(Sw_grid *grid){
         // if (i > xRes/4 && i < xRes*3/4 && j > yRes/4 && j < yRes*3/4)
         //     eta[index] = 0.1;
         // else
-        eta[index] = 0.1;
+        eta[index] = 1;
         ground[index] = 0.0;
         height[index] = ground[index] + eta[index];
         velx[index] = 0.0;
@@ -678,7 +697,7 @@ void AppMain() {
 
     // initialConditionBeach(grid);
     initialConditions(grid);
-    Box *box = new Box(Vector3f(0.5f, 0.5f, 0.5f), 0.1, Vector3f(0.2f, 0.0f, 0.0f),  Vector3f(0.0f, 0.2f, 0.0f),  Vector3f(0.0f, 0.0f, 0.2f));
+    Box *box = new Box(Vector3f(0.5f, 0.5f, 1.25f), 1, Vector3f(0.2f, 0.0f, 0.0f),  Vector3f(0.0f, 0.2f, 0.0f),  Vector3f(0.0f, 0.0f, 0.2f));
 
     // initiate solver and bind grid
     SWSolver sw_solver;
@@ -707,6 +726,12 @@ void AppMain() {
     bool bTsunami   = false;
     bool bBlob      = false;
     bool bBeachRise = false;
+	bool bMoveUp	= false;
+	bool bMoveDown	= false;
+	bool bMoveNorth	= false;
+	bool bMoveEast	= false;
+	bool bMoveSouth	= false;
+	bool bMoveWest	= false;
 
     // run while the window is open
     double lastTime = glfwGetTime();
@@ -715,7 +740,7 @@ void AppMain() {
         // update the scene based on the time elapsed since last update
         double thisTime = glfwGetTime();
         float dt = thisTime - lastTime;
-        Update(dt, bSolving, bRain, bTsunami, bBlob, bBeachRise);
+        Update(dt, bSolving, bRain, bTsunami, bBlob, bBeachRise, bMoveUp, bMoveDown, bMoveNorth, bMoveEast, bMoveSouth, bMoveWest);
         
         // if((int)(thisTime*10)%2 == 0){
         //     float potEnergy = solver.computePotentialEnergy();
@@ -740,8 +765,35 @@ void AppMain() {
             blob(grid);
             bBlob = false;
         }
+		float movementSpeed = 0.002f;
+		if(bMoveUp){
+			box->x += Vector3f(0.0f, 0.0f, 1.0f)*movementSpeed;
+			bMoveUp = false;
+		}
+		if(bMoveDown){
+			box->x += Vector3f(0.0f, 0.0f, -1.0f)*movementSpeed;
+			bMoveDown = false;
+		}
+		if(bMoveEast){
+			box->x += Vector3f(1.0f, 0.0f, 0.0f)*movementSpeed;
+			bMoveEast = false;
+		}
+		if(bMoveWest){
+			box->x += Vector3f(-1.0f, 0.0f, 0.0f)*movementSpeed;
+			bMoveWest = false;
+		}
+		if(bMoveSouth){
+			box->x += Vector3f(0.0f, 1.0f, 0.0f)*movementSpeed;
+			bMoveSouth = false;
+		}
+		if(bMoveNorth){
+			box->x += Vector3f(0.0f, -1.0f, 0.0f)*movementSpeed;
+			bMoveNorth = false;
+		}
+
+
         if(bSolving){
-            sim_time += dt;
+            sim_time += dt/10;
 
             float *eta = grid->oldFields[ETA];
             int xRes = grid->xRes;
@@ -751,15 +803,18 @@ void AppMain() {
             for (int j = 0; j < yRes - 1; j++)
                 H += eta[i+j*xRes];
             H /= (float)(xRes*yRes);
-            float maxdt = 0.1f*grid->dx / sqrt(sw_solver.g*H);
+            float maxdt = 0.01f*grid->dx / sqrt(sw_solver.g*H);
             
+			//int cnt = 0;
             while(phys_time < sim_time){
                 
                 float dtPhys = std::min(maxdt, sim_time - phys_time);
-                sw_solver.advanceTimestep(dt);
-                // swrb_solver.advanceTimestep(dtPhys);
+                swrb_solver.advanceTimestep(dtPhys);
+                sw_solver.advanceTimestep(dtPhys);
                 phys_time += dtPhys;
+			//	cnt += 1;
             }
+			//cout << cnt << endl;
         }
         lastTime = thisTime;
 

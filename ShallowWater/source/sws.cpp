@@ -217,11 +217,10 @@ Box* SWRBSolver::getBody(){
 }
 
 void SWRBSolver::advanceTimestep(float dt){
-	float *height = grid->oldFields[HEIGHT];
+	float *eta = grid->oldFields[ETA];
 	float *vel_x = grid->oldFields[VELX];
 	float *vel_y = grid->oldFields[VELY];
 	float dx = grid->dx;
-	cout << "setting displacements..." << endl;
 	// calculate vertices of the box (com + 1/2*(x0 + y0 + z0): +++, ++-, +--, ...)
 	Vector3f vertices[8];
 	int cnt = 0;
@@ -250,7 +249,6 @@ void SWRBSolver::advanceTimestep(float dt){
 		}
 
 //	cout << "handling body interaction..." << endl;
-	cout << totalDisplacement << endl;
 	std::vector<Vector3f> forces;
 	index = 0;
 	for(int i=x_min; i<x_max; i++)
@@ -258,11 +256,10 @@ void SWRBSolver::advanceTimestep(float dt){
 			// handle body --> water
 			// set height of neighbouring cells
 			float dh = (displ_new[INDEX(i, j)]-displ_old[INDEX(i, j)]);
-			//height[INDEX(i, j)] -= dh*alpha;
-			height[INDEX(i+1, j)] += dh*0.25*alpha;
-			height[INDEX(i, j+1)] += dh*0.25*alpha;
-			height[INDEX(i-1, j)] += dh*0.25*alpha;
-			height[INDEX(i, j-1)] += dh*0.25*alpha;
+			eta[INDEX(i+1, j)] += dh*0.25*alpha;
+			eta[INDEX(i, j+1)] += dh*0.25*alpha;
+			eta[INDEX(i-1, j)] += dh*0.25*alpha;
+			eta[INDEX(i, j-1)] += dh*0.25*alpha;
 
 			// handle water --> body
 			if(isIntersecting[index]){
@@ -273,17 +270,20 @@ void SWRBSolver::advanceTimestep(float dt){
 			index++;
 		}
 
-	// add gravity
-	forces.push_back(Vector3f(0.0f, 0.0f, -1.0f));
-	positions.push_back(box->x);
-
 /*
-	// some funny rotation
-	forces.push_back(Vector3f(0.0f, 0.0f, 0.0001f));
-	positions.push_back(box->x-box->x0/2.0f-box->y0/2.0f-box->z0/2.0f);
+	// add gravity
+	forces.push_back(Vector3f(0.0f, 0.0f, -box->mass*g));
+	positions.push_back(box->x);
 */
 
-	rbs.advanceTimestep(dt, forces, positions);
+
+
+	// some funny rotation
+	forces.push_back(Vector3f(0.0f, 0.0f, 0.01f));
+	positions.push_back(box->x-box->x0/2.0f-box->y0/2.0f-box->z0/2.0f);
+
+
+//	rbs.advanceTimestep(dt, forces, positions);
 	forces.clear();
 	positions.clear();
 
