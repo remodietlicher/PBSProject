@@ -5,34 +5,34 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>E31447FE-C369-4FE0-8015-8079909A4814</string>
+	<string>79A43A9B-C6DA-450F-A957-F1985A914088</string>
 	<key>IDESourceControlProjectName</key>
 	<string>article-04-camera</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>34B57EE7-2303-45BC-853A-F45693E50722</key>
-		<string>https://github.com/remodietlicher/PBSProject/</string>
+		<key>83F67D89-7017-4315-85A5-A715A548C6DF</key>
+		<string>https://github.com/remodietlicher/PBSProject</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>ShallowWater/article-04-camera.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>34B57EE7-2303-45BC-853A-F45693E50722</key>
+		<key>83F67D89-7017-4315-85A5-A715A548C6DF</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://github.com/remodietlicher/PBSProject/</string>
+	<string>https://github.com/remodietlicher/PBSProject</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>34B57EE7-2303-45BC-853A-F45693E50722</string>
+	<string>83F67D89-7017-4315-85A5-A715A548C6DF</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>34B57EE7-2303-45BC-853A-F45693E50722</string>
+			<string>83F67D89-7017-4315-85A5-A715A548C6DF</string>
 			<key>IDESourceControlWCCName</key>
 			<string>PBSProject</string>
 		</dict>

@@ -9,7 +9,7 @@ SWSolver::SWSolver() {
 	a_ext[0] = 0;
 	a_ext[1] = 0;
 	v_ext[0] = 0;
-	v_ext[1] = 0;
+	v_ext[1] = -0.5;
 	g = 9.81f;
 	time = 0.0;
 
@@ -201,8 +201,8 @@ SWRBSolver::SWRBSolver(Sw_grid *_grid, Box *b) :
 	box(b),
 	rbs(b),
     grid(_grid),
-	alpha(1.0f),
-	rho(100.0f),
+	alpha(0.5f),
+	rho(1000.0f),
 	g(9.81f)
 
 {
@@ -221,6 +221,7 @@ void SWRBSolver::advanceTimestep(float dt){
 	float *vel_x = grid->oldFields[VELX];
 	float *vel_y = grid->oldFields[VELY];
 	float dx = grid->dx;
+    
 	// calculate vertices of the box (com + 1/2*(x0 + y0 + z0): +++, ++-, +--, ...)
 	Vector3f vertices[8];
 	int cnt = 0;
@@ -263,27 +264,24 @@ void SWRBSolver::advanceTimestep(float dt){
 
 			// handle water --> body
 			if(isIntersecting[index]){
-				float hb = 1;  // what is hb in Thue07 eq (11)? 
+				float hb = 1.0;  // what is hb in Thue07 eq (11)?
 				float buoyancy = g*dx*dx*displ_new[INDEX(i, j)]*rho;
 				forces.push_back(Vector3f(hb*vel_x[INDEX(i, j)], hb*vel_y[INDEX(i, j)], buoyancy));
 			}
 			index++;
 		}
 
-/*
+
 	// add gravity
 	forces.push_back(Vector3f(0.0f, 0.0f, -box->mass*g));
 	positions.push_back(box->x);
-*/
-
-
 
 	// some funny rotation
-	forces.push_back(Vector3f(0.0f, 0.0f, 0.01f));
-	positions.push_back(box->x-box->x0/2.0f-box->y0/2.0f-box->z0/2.0f);
+//	forces.push_back(Vector3f(0.0f, 0.0f, 0.01f));
+//	positions.push_back(box->x-box->x0/2.0f-box->y0/2.0f-box->z0/2.0f);
 
 
-//	rbs.advanceTimestep(dt, forces, positions);
+	rbs.advanceTimestep(dt, forces, positions);
 	forces.clear();
 	positions.clear();
 
@@ -325,10 +323,7 @@ void SWRBSolver::estimateIndices(Vector3f vertices[8], int &x_min, int &x_max, i
 //! displ is the "height" of the displacement and r is the position on the surface of the body where the intersection happens
 // r is later on used to calculate the torque excerted on the body
 bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
-	int res[] = {
-		grid->xRes,
-		grid->yRes
-	};
+	
 	float *height = grid->oldFields[HEIGHT];
 	Vector3f P_line(float(i)*grid->dx, float(j)*grid->dx, 0.0f);
 	Vector3f V(0.0f, 0.0f, 1.0f);
@@ -386,7 +381,7 @@ bool SWRBSolver::calculateDisplacement(int i, int j, float &displ, Vector3f &r){
 		bubbleSortVert(2, P, 2);
 		float t0 = P[0][2];
 		float t1 = P[1][2];
-		r = P[0];
+        r = P[0];
 		assert(t0<t1);							// just double checking bubblesort
 		float h = height[INDEX(i, j)];
 		isIntersecting = true;					// remember where the intersection starts

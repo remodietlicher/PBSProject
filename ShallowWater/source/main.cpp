@@ -60,8 +60,8 @@ GLfloat *vertexXY; // vertex positons in CPU RAM
 // loads the vertex shader and fragment shader, and links them to make the global gProgram
 static void LoadShaders() {
     std::vector<tdogl::Shader> shaders;
-	shaders.push_back(tdogl::Shader::shaderFromFile("resources/vertex-shader.txt", GL_VERTEX_SHADER));
-	shaders.push_back(tdogl::Shader::shaderFromFile("resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/monday_15h/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/monday_15h/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
 	// shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\vertex-shader.txt", GL_VERTEX_SHADER));
  //    shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\fragment-shader.txt", GL_FRAGMENT_SHADER));
     gProgram = new tdogl::Program(shaders);
@@ -457,7 +457,7 @@ void Update(float secondsElapsed, bool &bSolving, bool &bRain, bool &bTsunami, b
     if(glfwGetKey('P')){
         bSolving = true;
     }
-    if(glfwGetKey('L')){
+    if(glfwGetKey('O')){
         bSolving = false;
     }
     if(glfwGetKey('R')){
@@ -481,7 +481,7 @@ void Update(float secondsElapsed, bool &bSolving, bool &bRain, bool &bTsunami, b
     if(glfwGetKey('L')){
         bMoveEast = true;
     }
-    if(glfwGetKey('M')){
+    if(glfwGetKey('K')){
         bMoveNorth = true;
     }
     if(glfwGetKey('J')){
@@ -693,17 +693,17 @@ void initGLFW(){
 // the program starts here
 void AppMain() {
     float size = 50;
-    Sw_grid *grid = new Sw_grid(size, 2*size, 4.0/size);
+    Sw_grid *grid = new Sw_grid(size, 5*size, 5.0/size);
 
     // initialConditionBeach(grid);
     initialConditions(grid);
-    Box *box = new Box(Vector3f(0.5f, 0.5f, 1.25f), 1, Vector3f(0.2f, 0.0f, 0.0f),  Vector3f(0.0f, 0.2f, 0.0f),  Vector3f(0.0f, 0.0f, 0.2f));
+    Box *box = new Box(Vector3f(1.f, 1.5f, 1.f), 200, Vector3f(1.f, 0.0f, 0.0f),  Vector3f(0.0f, 1.5f, 0.0f),  Vector3f(0.0f, 0.0f, 0.4f));
 
     // initiate solver and bind grid
     SWSolver sw_solver;
     sw_solver.setGrid(grid);
     SWRBSolver swrb_solver(grid, box);
-
+    
     // initialize GLFW & GLEW
     initGLFW();
 
@@ -765,7 +765,7 @@ void AppMain() {
             blob(grid);
             bBlob = false;
         }
-		float movementSpeed = 0.002f;
+		float movementSpeed = 0.01f;
 		if(bMoveUp){
 			box->x += Vector3f(0.0f, 0.0f, 1.0f)*movementSpeed;
 			bMoveUp = false;
@@ -793,17 +793,17 @@ void AppMain() {
 
 
         if(bSolving){
-            sim_time += dt/10;
+            sim_time += dt/3;
 
-            float *eta = grid->oldFields[ETA];
-            int xRes = grid->xRes;
-            int yRes = grid->yRes;
-            float H = 0.;
-            for (int i = 0; i < xRes - 1; i++)
-            for (int j = 0; j < yRes - 1; j++)
-                H += eta[i+j*xRes];
-            H /= (float)(xRes*yRes);
-            float maxdt = 0.01f*grid->dx / sqrt(sw_solver.g*H);
+//            float *eta = grid->oldFields[ETA];
+//            int xRes = grid->xRes;
+//            int yRes = grid->yRes;
+//            float H = 0.;
+//            for (int i = 0; i < xRes - 1; i++)
+//            for (int j = 0; j < yRes - 1; j++)
+//                H += eta[i+j*xRes];
+//            H /= (float)(xRes*yRes);
+            float maxdt = 0.001f;//0.01f*grid->dx / sqrt(sw_solver.g*H);
             
 			//int cnt = 0;
             while(phys_time < sim_time){

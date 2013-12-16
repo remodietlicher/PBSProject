@@ -5,7 +5,9 @@ RigidBodySolver::RigidBodySolver(Box *b) :
 	{}
 
 Matrix3x3f RigidBodySolver::star(Vector3f v){
-	return 	Matrix3x3f(0.0f, -v[2],v[1], v[2], 0.0f, -v[0], -v[1], v[0], 0.0f);
+	return 	Matrix3x3f(0.0f, -v[2], v[1],
+                       v[2], 0.0f, -v[0],
+                       -v[1], v[0], 0.0f);
 }
 
 //! parameter: dt: timestep, F: array of external forces, r: where the external forces act on body, N: number of ext. F.
@@ -22,17 +24,25 @@ void RigidBodySolver::sumExternalForces(std::vector<Vector3f> F, std::vector<Vec
 	int N = (int)F.size();
 	for(int i=0; i<N; i++){
 		body->force += F[i];
-		body->torque += (r[i] - body->x).cross(F[i]);
+        
+        Vector3f torque = (r[i] - body->x).cross(F[i]);
+            body->torque += torque;
+//        if(body->torque.length() > 0.01)
+//            body->torque = body->torque/body->torque.length() * 0.01;
+            //        printf("torque= %f, F= %f, r= %f\n", torque.length(), F[i].length(), (r[i] - body->x).length());
 	}
 }
 
 void RigidBodySolver::performEulerIntegration(float dt){
-	body->v += 1/body->mass*dt*body->force;
-	body->x += dt*body->v;
-	body->R += dt*star(body->omega)*body->R;
-	body->Iinv = body->R*body->Ibodyinv*body->R.transposed();
-	body->L += dt*body->torque;
+	body->x    += dt*body->v;
+	body->v    += 1/body->mass*dt*body->force;
+	body->R    += dt*star(body->omega)*body->R;
+	body->Iinv  = body->R * body->Ibodyinv * body->R.transposed();
+	body->L    += dt*body->torque;
 	body->omega = body->Iinv*body->L;
+    if(body->L.length() > 0.1)
+        body->L = body->L/body->L.length() * 0.1;
+
 }
 
 void RigidBodySolver::performImplicitEulerIntegration(float dt){
