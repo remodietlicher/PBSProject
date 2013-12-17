@@ -32,6 +32,10 @@
     <ClCompile Include="source\tdogl\Camera.cpp">
       <Filter>source\tdogl</Filter>
     </ClCompile>
+    <ClCompile Include="source\rbs.cpp" />
+    <ClCompile Include="source\sw_grid.cpp" />
+    <ClCompile Include="source\sws.cpp" />
+    <ClCompile Include="source\vec3f.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\tdogl\Bitmap.h">
@@ -49,6 +53,13 @@
     <ClInclude Include="source\tdogl\Camera.h">
       <Filter>source\tdogl</Filter>
     </ClInclude>
+    <ClInclude Include="source\box.h" />
+    <ClInclude Include="source\rbs.h" />
+    <ClInclude Include="source\rigidbody.h" />
+    <ClInclude Include="source\sw_grid.h" />
+    <ClInclude Include="source\sws.h" />
+    <ClInclude Include="source\utilities.h" />
+    <ClInclude Include="source\vec3f.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\fragment-shader.txt">

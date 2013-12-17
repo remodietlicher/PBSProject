@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -12,18 +12,29 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\rbs.cpp" />
+    <ClCompile Include="source\sws.cpp" />
+    <ClCompile Include="source\sw_grid.cpp" />
     <ClCompile Include="source\tdogl\Bitmap.cpp" />
     <ClCompile Include="source\tdogl\Camera.cpp" />
     <ClCompile Include="source\tdogl\Program.cpp" />
     <ClCompile Include="source\tdogl\Shader.cpp" />
     <ClCompile Include="source\tdogl\Texture.cpp" />
+    <ClCompile Include="source\vec3f.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\box.h" />
+    <ClInclude Include="source\rbs.h" />
+    <ClInclude Include="source\rigidbody.h" />
+    <ClInclude Include="source\sws.h" />
+    <ClInclude Include="source\sw_grid.h" />
     <ClInclude Include="source\tdogl\Bitmap.h" />
     <ClInclude Include="source\tdogl\Camera.h" />
     <ClInclude Include="source\tdogl\Program.h" />
     <ClInclude Include="source\tdogl\Shader.h" />
     <ClInclude Include="source\tdogl\Texture.h" />
+    <ClInclude Include="source\utilities.h" />
+    <ClInclude Include="source\vec3f.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\fragment-shader.txt" />
@@ -40,12 +51,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -59,11 +72,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)thirdparty\glew-1.9.0\include;$(ProjectDir)thirdparty\glfw-2.7.7\include;$(ProjectDir)thirdparty\glm-0.9.4.0;$(ProjectDir)thirdparty\stb_image;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)thirdparty\glew-1.9.0\lib;$(ProjectDir)thirdparty\glfw-2.7.7\lib-msvc100;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)thirdparty\glew-1.9.0\lib;$(ProjectDir)thirdparty\glut;$(ProjectDir)thirdparty\glfw-2.7.7\lib-msvc110;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)thirdparty\glew-1.9.0\include;$(ProjectDir)thirdparty\glfw-2.7.7\include;$(ProjectDir)thirdparty\glm-0.9.4.0;$(ProjectDir)thirdparty\stb_image;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)thirdparty\glew-1.9.0\lib;$(ProjectDir)thirdparty\glfw-2.7.7\lib-msvc100;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)thirdparty\glew-1.9.0\lib;$(ProjectDir)\thirdparty\glut;$(ProjectDir)thirdparty\glfw-2.7.7\lib-msvc100;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -73,7 +86,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>GLFW.lib;glew32s.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>GLFW.lib;glew32s.lib;opengl32.lib;glut32.lib;glut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command> copy "$(ProjectDir)resources\*" "$(OutDir)\"</Command>
@@ -94,7 +107,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>GLFW.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>GLFW.lib;glew32s.lib;opengl32.lib;glut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command> copy "$(ProjectDir)resources\*" "$(OutDir)\"</Command>

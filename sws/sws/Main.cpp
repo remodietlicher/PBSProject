@@ -292,7 +292,7 @@ void start()
 int main(int argc, char** argv) {
 
 	loadScene();
-
+	/*
 	ofstream heightmap_data;
 	ofstream displacement_data;
 	ofstream body_data;
@@ -325,8 +325,9 @@ int main(int argc, char** argv) {
 	heightmap_data.flush();
 	displacement_data.flush();
 	body_data.flush();
+	*/
 
-/*
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(g_width, g_height);
@@ -345,7 +346,7 @@ int main(int argc, char** argv) {
 #else
 	glutMainLoop();
 #endif
-*/
+
 
 
 	return 0;

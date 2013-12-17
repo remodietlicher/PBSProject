@@ -60,10 +60,10 @@ GLfloat *vertexXY; // vertex positons in CPU RAM
 // loads the vertex shader and fragment shader, and links them to make the global gProgram
 static void LoadShaders() {
     std::vector<tdogl::Shader> shaders;
-	shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/monday_15h/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
-	shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/monday_15h/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
-	// shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\vertex-shader.txt", GL_VERTEX_SHADER));
- //    shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\fragment-shader.txt", GL_FRAGMENT_SHADER));
+	//shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/monday_15h/PBSProject/ShallowWater/resources/vertex-shader.txt", GL_VERTEX_SHADER));
+	//shaders.push_back(tdogl::Shader::shaderFromFile("/Users/moritz/scratch/monday_15h/PBSProject/ShallowWater/resources/fragment-shader.txt", GL_FRAGMENT_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\vertex-shader.txt", GL_VERTEX_SHADER));
+	shaders.push_back(tdogl::Shader::shaderFromFile("C:\\Users\\hacke\\Documents\\CAS\\physically-based-simulation\\project\\PBSProject\\ShallowWater\\resources\\fragment-shader.txt", GL_FRAGMENT_SHADER));
     gProgram = new tdogl::Program(shaders);
 }
 
@@ -809,7 +809,7 @@ void AppMain() {
             while(phys_time < sim_time){
                 
                 float dtPhys = std::min(maxdt, sim_time - phys_time);
-                swrb_solver.advanceTimestep(dtPhys);
+                //swrb_solver.advanceTimestep(dtPhys);
                 sw_solver.advanceTimestep(dtPhys);
                 phys_time += dtPhys;
 			//	cnt += 1;
@@ -828,7 +828,7 @@ void AppMain() {
         // check for errors
         GLenum error = glGetError();
         if(error != GL_NO_ERROR)
-            std::cerr << "OpenGL Error " << error << ": " << (const char*)gluErrorString(error) << std::endl;
+            std::cerr << "OpenGL Error " << error << ": " << error << std::endl;
 
         // measure frames per second
         fps.measure_fps();
